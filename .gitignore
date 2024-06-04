@@ -47,3 +47,13 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# Folders and files
+manuscript/submission_files
+manuscript/commented_versions
+data/assemble_data.R
+data/FraserFranco-demande-partage-donnees.docx
+accessory_folders
+outputs/outputs_models
+.Rproj.user
+.radian_profile
