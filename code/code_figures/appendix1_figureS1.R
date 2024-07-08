@@ -142,10 +142,13 @@ tab1 <- tab1[cumul_xp <= total_xp_pred, ]
 # Extract players with greatest increase and decrease ---------------------
 
 # Calculate 1st and final value
-tab1[, ":=" (
-  first = min(Zcumul_xp),
-  last = max(Zcumul_xp)),
-  by = predator_id]
+tab1[
+  , ":=" (
+    first = min(Zcumul_xp),
+    last = max(Zcumul_xp)
+  )
+  , by = predator_id
+]
 
 tab1[, equal1 := ifelse(Zcumul_xp == first, 1, 0), by = predator_id]
 tab1[, equal2 := ifelse(Zcumul_xp == last, 1, 0), by = predator_id]
@@ -159,7 +162,7 @@ tab2 <- dcast(
   tab2,
   predator_id ~ range,
   value.var = "estimate__"
-  )
+)
 
 
 # Calculate the difference in predicted success between minimum and maximum xp
@@ -269,22 +272,24 @@ gamm_plot3 <- ggplot(table[difference %between% c(-0.05, 0.05), ],
 # Prepare figure --------------------------------------------------------
 
 # Arrange paneled figure
- figure <- ggarrange(
-    NULL, gamm_plot1, NULL, gamm_plot2, NULL, gamm_plot3,
-    ncol = 6, nrow = 1,
-    labels = c("(A)", "", "(B)", "", "(C)"),
-    widths = c(0.15, 1.5, 0.15, 1.5, 0.15, 1.5)
- )
+figure <- ggarrange(
+   NULL, gamm_plot1, NULL, gamm_plot2, NULL, gamm_plot3,
+   ncol = 6, nrow = 1,
+   labels = c("(A)", "", "(B)", "", "(C)"),
+   widths = c(0.15, 1.5, 0.15, 1.5, 0.15, 1.5)
+)
 
 # Export the figure -----------------------------------------------------
 
- path <- file.path(getwd(), "outputs", "04_outputs_figures")
+path <- file.path(getwd(), "outputs", "outputs_figures")
 
- ggexport(figure,
-          filename = file.path(path, "appendix1_figureS1.png"),
-          width = 4500,
-          height = 1200,
-          res = 300)
+ggexport(
+  figure,
+  filename = file.path(path, "appendix1_figureS1.png"),
+  width = 4500,
+  height = 1200,
+  res = 300
+)
 
 # =======================================================================
 # =======================================================================
