@@ -1,0 +1,162 @@
+---
+title: |
+     Prey movement shapes the development of predator expertise in a virtual bi-trophic system: \
+     Appendix
+    
+output: 
+  word_document:
+    reference_docx: appendix-styles.docx
+    fig_caption: yes
+csl: chicago-author-date.csl
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+library(data.table)
+library(brms)
+library(flextable)
+library(officer)
+library(dplyr)
+```
+
+\newpage
+
+```{r tableprep, include = FALSE}
+# ===========================================================================
+# 1. Extract the fixed effects from the MV model
+# ===========================================================================
+
+# Prepare the table ---------------------------------------------------------
+
+# Model fit
+fit <- readRDS(
+  here::here("outputs", "outputs_models", "DHMLM-RandomSample.rds")
+)
+
+# Fixed effects table
+results <- data.table(
+  round(summary(fit, robust = TRUE, prob = 0.89)$fixed, digits = 2)[, 1:4],
+  keep.rownames = TRUE
+)
+setnames(results, "rn", "parameter")
+
+# Trait variable (to remove after)
+results[parameter %like% "predspeed", trait := "predator speed"][
+  parameter %like% "preyavgspeed", trait := "prey speed"][
+    parameter %like% "success", trait := "hunting success"
+  ]
+
+# mu parameters table
+tab <- results[
+    !(parameter %like% "sigma"),
+    c(6, 1, 2, 4, 5)
+]
+tab <- tab[trait == "hunting success"]
+
+
+# Rename parameter values ---------------------------------------------------
+
+# Rename
+tab[,
+  parameter := 
+      c("game duration",
+        "cumulative experience",
+        "group 1",
+        "group 4",
+        "group 2",
+        "group 3")
+]
+# Reorder rows
+tab <- tab[
+  c(1,2,3,5,6,4)
+]
+tab[, trait := NULL]
+
+# ===========================================================================
+# ===========================================================================
+
+
+
+
+
+# ===========================================================================
+# 2. Compute the table using flextable
+# ===========================================================================
+
+# Prepare the table parameters ----------------------------------------------
+
+# Custom header
+my_header <- data.frame(
+   col_keys = c("parameter",
+                "Estimate",
+                "l-89% CI",
+                "u-89% CI"),
+   line1 = c("Parameter",
+             "Estimate",
+             "lower 89% CI",
+             "upper 89% CI"),
+   stringsAsFactors = FALSE
+)
+
+# Custom theme
+my_theme <- function(x, ...) {
+   x <- colformat_double(x, big.mark = " ",
+                         decimal.mark = ".",
+                         digits = 2)
+   x <- set_table_properties(x, layout = "autofit")
+   x <- border_remove(x)
+   std_border <- fp_border(width = 1, color = "black")
+   x <- hline_top(x, part = "all", border = std_border)
+   x <- hline_bottom(x, part = "all", border = std_border)
+   x <- width(x, j = 1, width = 3.78, unit = "cm")
+   x <- width(x, j = c(3:4), width = 3.3, unit = "cm")
+}
+```
+
+```{r tableS1, ft.align = "left"}
+# Create the table ----------------------------------------------------------
+
+tabf <- tab %>%
+  flextable(col_keys = my_header$col_keys) %>%
+  set_header_df(mapping = my_header, key = "col_keys") %>%
+  my_theme() %>%
+  merge_v(j = 1) %>%
+  valign(j = 1, valign = "top", part = "body") %>%
+  align(align = "left", part = "all", j = 1) %>%
+  align(align = "center", part = "all", j = c(2:4)) %>%
+  footnote(
+    i = 1, j = 1,
+    part = "header",
+    value = as_paragraph(
+      as_sup("a "),
+      "Group 1: <50 matches, Group 2: between 50 and 99 matches, Group 3: between 100 and 299 matches, Group 4: > 299 (i.e. group in the main text)"
+    ),
+    ref_symbols = " "
+  ) %>%
+  set_caption(
+    tab,
+    caption = "Table S1. Fixed effects table comparing the success of random groups of players with different amounts of matches played to the group presented in the main text.",
+    style = "Table Caption"
+  ) %>%
+  fontsize(size = 10, part = "all") %>%
+  fontsize(size = 12, part = "footer") %>%
+  font(fontname = "Times New Roman", part = "all")
+
+tabf
+
+# ===========================================================================
+# ===========================================================================
+```
+
+\newpage
+
+```{r figS1, out.width = "100%", fig.cap = "**Figure S1.** Among individual differences in the development of hunting expertise in the model where we do not account for prey speed and average rank. The predators' hunting success (i.e. the probability of capturing the four prey) is on the y axis, and the predators' cumulative experience (i.e. the number of matches played prior to each observation) is on the x axis. Each fitted curve represents an individual predator. The individual curves are separated by differences between their first and last predicted value, and displayed as such in three distinct panels. (A) Individuals with a >0.5 unit increase in hunting success with experience (B) Individuals with a <-0.5 unit decrease in hunting success with experience. (C) Individuals that maintained a stable hunting success (between -0.5 and 0.5 unit change in hunting success)"}
+
+knitr::include_graphics(
+  here::here(
+    "outputs", "outputs_figures",
+    "appendix1_figureS1.png"
+  )
+)
+```
