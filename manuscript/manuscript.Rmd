@@ -48,6 +48,10 @@ dat[, date := as.POSIXct(sub(" .*", "", timestamp))]
 
 **revoir la phrase sur ce qu'on fait dans l'étude. Intégrer l'aspect des proies**
 
+**arranger les appendices pour inclure la table qui ne montre que le succès**
+
+**il n'y aurait qu'un seul appendice**
+
 The acquisition of expertise is crucial for predators to be successful hunters. To do so, predators need to hone their skills and acquire knowledge through repeated and extensive practice. Yet, there are limited empirical assessments showing how predators acquire expertise through repeated encounters with their prey due to the challenges of monitoring direct interactions in the wild. Here, we use a virtual predator-prey system (the game *Dead by Daylight*) to investigate how experience shapes individual and population hunting success in human predators across repeated interactions with their prey. We show that predators optimized prey consumption as they gained experience, indicating that they acquired expertise with extensive practice. Prey speed was an important mediator of this relationship, driving differences among predators in the development of expertise. At the population-level, we found that faster prey could impair the acquisition of expertise by reducing hunting success. At the individual-level, our results show that prey speed shapes how individual predators acquire expertise. Therefore, our study outlines how prey antipredator behaviour can mediate the acquisition of expertise in predator populations.
 
 Keywords: predator-prey, experience, learning, antipredator behaviour, virtual ecology, Dead by Daylight
@@ -65,7 +69,7 @@ On the other hand, prey use antipredator tactics such as rapid escapes to evade 
 
 A recurring challenge impeding research on predator-prey behavioural interactions is the need to collect data simultaneously on both the predator and the prey. Similar to agent-based simulations, online videogames can be useful systems to mitigate these challenges and test specific ecological hypotheses. They provide controlled virtual environments to test ecological hypotheses [see @lymbery.etal2023] with the advantage of having real players that interact in the virtual space. For example, in the predator-prey videogame *Dead by Daylight*, four prey players need to forage for resources while avoiding predation by a fifth player. In this virtual system, the predator population is composed of individuals that either ambush or hunt at high speeds (i.e. mean movement speed along a slow-fast continuum), and their success is driven by the movement of the prey [@fraserfranco.etal2022]. The prey can increase their chances of survival by cooperating and moving fast to escape the predator [@cere.etal2021;@fraserfranco.etal2022;@santostefano.etal2024]. The game also ellicits natural reactions in players such as freezing when predation is imminent (personal observations), which corroborates with another virtual ecological study showing that predation drives individual variation in risk perception [@beauchamp2020]. These observations outline how fundamental ecological patterns can emerge from human interactions in virtual systems with fixed rules [@brosnan.etal2017;@kasumovic.etal2017]. Videogames also generate large volumes of data on interacting players throughout their lifetime in the game under realistic, controlled, and repeatable ecological scenarios. Hence, virtual systems such as *Dead by Daylight* offer the opportunity to tackle fundamental questions about the role of experience on predator-prey interactions.
 
-In this study, we assess how repeated encounters with prey shapes predator hunting success using data from players in *Dead by Daylight*. First, we investigate how individual hunting success changes with repeated encounters (i.e. how individuals develop their hunting expertise). At the population level, we hypothesize that the predators' success will increase with experience up to a certain level where it will stabilize [@dukas2019]. However, we expect this pattern to vary among individuals due to differences in the movement of prey encountered. Therefore, we then investigate how prey movement influences the development of expertise. If predators encounter groups of prey with similar speeds, we predict that the gain in expertise will be similar among individuals. Alternatively, if predators encounter groups of prey with varying speeds, then the acquisition of expertise will vary among individuals. We predict that faster prey will impair expertise acquisition, such that predators that encountered faster prey will have lower success throughout experience.
+In this study, we assess how repeated encounters with prey shapes predator hunting success using data from players in *Dead by Daylight*. First, we investigate the development of expertise at the population level. We hypothesize that the predator population's success will increase with experience up to a certain level where it will stabilize [@dukas2019]. However, we expect this pattern to change depending on the movement of the prey encountered. We hypothesize that prey will influence the development of expertise, and predict that faster prey will reduce the gain in expertise. Therefore, we then investigate how prey movement influences the development of expertise at the individual level. If prey speed does not influence hunting success, we predict that the gain in expertise will be similar among individuals. Alternatively, if prey speed influences hunting success, then the acquisition of expertise will vary among individuals.
 
 
 
@@ -98,7 +102,7 @@ We computed the five models using a modified version of the beta-binomial distri
 
 ### Markov Chain Monte Carlo settings
 
-We parametrized the GAMMs and the MDHGLM to run four MCMC chains with 1000 posterior samples for each parameter. We ran 2500 iterations with a thinning set to eight for the additive model with a global smoother only (see Table 1), and 1500 iterations with a thinning set to four for the other additive models. We set the first 500 iterations in each model as warm ups. We parametrized the MDHGLM to run 2500 iterations with a thinning set to eight, with the first 500 iterations used as warm ups. We assessed the convergence of the MCMC chains using trace plots, R-hat diagnostics with a threshold of <1.01, and effective sample sizes (ESS) with a threshold of >100 [@vehtari.etal2021]. We also performed posterior predictive checks which showed an adequate fit of the models. We report all the posterior parameter estimates using the median of the posterior distribution with the highest posterior density (HPD) intervals at 50%, 80%, and 95%.
+We parametrized the GAMMs to run four MCMC chains with 1000 posterior samples for each parameter. We ran 2500 iterations with a thinning set to eight for the additive model with a global smoother only (see Table 1), and 1500 iterations with a thinning set to four for the remaining additive models. We set the first 500 iterations of each model as warm ups. We assessed the convergence of the MCMC chains using trace plots, R-hat diagnostics with a threshold of <1.01, and effective sample sizes (ESS) with a threshold of >100 [@vehtari.etal2021]. We also performed posterior predictive checks which showed an adequate fit of the models.
 
 ### Software and computer specifications
 
@@ -106,21 +110,27 @@ All models were fitted in R (version 4.1.2) using Markov chain Monte Carlo (MCMC
 
 
 
+
 # RESULTS {.unnumbered}
 
-## Development of expertise
+## Development of expertise at the population level
 
 ```{r}
-# Open percentages table
-path <- file.path(here::here("outputs", "outputs_model-processing"))
-percent_tab1 <- data.table(readRDS(file.path(path, "GAMM_percentages.rds")))
-
 # Import top 2 model fits
 fit1 <- readRDS(here::here("outputs", "outputs_models", "A2_GAMM-rank.rds"))
 fit2 <- readRDS(here::here("outputs", "outputs_models", "A2_GAMM-speed-rank.rds"))
+
+sum1 <- summary(fit1, robust = TRUE)$splines
+sum2 <- summary(fit2, robust = TRUE)$splines
+
+# Clear memory
+rm(fit1)
+rm(fit2)
 ```
 
-Out of all five GAMM models, the two that accounted for the prey group's rank and speed were the best at predicting the data, achieving similar expected log pointwise densities (Table 1). Models in which prey effects were not accounted for resulted in no change in hunting success with experience (i.e. expertise) for the average individual (**Appendix XX**). Accounting for the prey rank resulted in a concave-shaped relationship, with the highest success ranging between 100 and 400 matches (Figure 1A). In the model where we additionally included the prey's speed, the effect of experience on hunting success for the average individual followed a diminishing returns curve as we predicted, with predators optimizing their success after playing ~300 matches (Figure 1C). The curve shows there was a 38% increase in the probability of consuming all prey for the average individual between the first and the ~330$^{th}$ match where success reached a plateau (Figure 1C).
+Out of all five GAMM models, the two that accounted for the prey group's rank and speed were the best at predicting the data, achieving similar expected log pointwise densities (Table 1). Models in which prey effects were not accounted for resulted in no change in hunting success with experience (i.e. expertise) for the average individual. Accounting for the prey rank resulted in a concave-shaped relationship, with the highest success ranging between 100 and 400 matches (Figure 1A). In the model where we included the prey's speed, the effect of experience on hunting success for the average individual followed a diminishing returns curve as we predicted, with predators optimizing their success after playing ~300 matches (Figure 1C). The curve shows there was a 38% increase in the probability of consuming all prey for the average individual between the first and the ~330$^{th}$ match where success reached a plateau (Figure 1C).
+
+\newpage
 
 ```{r table1, ft.align = "left"}
 
@@ -231,10 +241,11 @@ tab1 <- loo_tab %>%
 tab1
 # ===========================================================================
 # ===========================================================================
-
 ```
 
-The relationship between hunting success and cumulative experience differed among predators (Figure 1B-D). Only `r toString(scales::percent(percent_tab1[2,]$percentage, accuracy = 0.1))` of the population had an increase in success from the first match to the last in the model where we did not account for the prey's speed and rank (Appendix S1: Figure S1A). In contrast, accounting for both effects resulted in `r toString(scales::percent(percent_tab1[5,]$percentage, accuracy = 0.1))` of the population increasing its success with experience from the first match to the last. The prey speed mediated individual differences in the relationship between success and experience. The standard deviation of the individual slopes component of the model accounting only for prey rank was equal to 9.72 (9.30, 10.15 $95\%\ CI$), while the one for the model accounting for prey rank and speed was equal to 3.36 (3.04, 3.71 $95\%\ CI$), indicating that individual differences in the development of expertise decreased when accounting for prey speed.
+## Development of expertise at the individual level
+
+Prey speed did not influence among individual differences in average hunting success as the posterior distributions of the standard deviations of individual intercepts were almost completely overlapping (Figure 2, median = `r toString(round(sum1[2,]$Estimate, digits = 2))` vs median = `r toString(round(sum2[2,]$Estimate, digits = 2))`). However, individuals differed in the development of their hunting expertise (Figure 1B-D). We found strong evidence that the speed of the prey mediated among individual differences in the linear relationship between success and experience, as there were substantial differences in the standard deviations of the individual slopes between the two models (Figure 2, median = `r toString(round(sum1[3,]$Estimate, digits = 2))` vs median = `r toString(round(sum2[3,]$Estimate, digits = 2))`). Differences among individuals in the direction of the linear relationship between success and experience were `r toString(round(sum1[3,]$Estimate / sum2[3,]$Estimate, digits = 2))` times lower when we removed the effect of prey speed (i.e. accounting for it in the model).
 
 ```{r fig1, out.width = "100%", fig.cap = "**Figure 1**. Median posterior predictions of the development of predator hunting expertise. The predators' hunting success (i.e. the probability of consuming the four prey) is on the y axis, and the predators' cumulative experience (i.e. the number of matches played prior to each observation) is on the x axis. Panels A and C show the development of expertise for the average individual with the vertical dashed lines on the left representing the lowest predicted values. For panel A, the right-side vertical dashed line shows the highest predicted success. For panel C, the right-side dashed line represents the point on the curve where success was optimized, which we calculated using the finite differences method to obtain the first derivative of the predicted values. Panels B and D show among individual differences in the development of expertise, with each curve representing an individual predator. (A-B) GAMM where we control for the prey rank (C-D) GAMM where we control for the prey rank and the speed of the prey group."}
 
@@ -243,7 +254,9 @@ knitr::include_graphics(
 )
 ```
 
-```{r fig2, out.width = "100%", fig.cap = "**Figure 2**. Posterior distributions of the individual-level standard deviation parameters. The first two panels represent the intercept and slope standard deviations of the linear components relating hunting success to cumulative experience, and the third panel represents the standard deviation of the wiggliness component of the curves. The light coloured distributions are for the model with a shared trend where we did not account for prey speed, and the darker coloured distributions are for the model with a shared trend where we accounted for prey speed (i.e. the model with the highest predictive power)"}
+We also found strong evidence that the speed of the prey mediated the form of the relationship between hunting success and experience at the individual level. We detected large differences in the standard deviations of the wiggliness (Figure 2, median = `r toString(round(sum1[4,]$Estimate, digits = 2))` vs median = `r toString(round(sum2[4,]$Estimate, digits = 2))`). The lower standard deviation for the model were we accounted for prey speed suggests that the form of the relationship between success and experience was more similar among individuals.
+
+```{r fig2, out.width = "100%", fig.cap = "**Figure 2**. Posterior distributions of the individual-level standard deviation parameters. The first two panels represent the intercept and slope standard deviations of the linear components relating hunting success to cumulative experience, and the third panel represents the standard deviation of the wiggliness component of the curves. The vertical dashed lines are the medians of the posterior distributions. The light coloured distributions are for the model with a shared trend where we did not account for prey speed, and the darker coloured distributions are for the model with a shared trend where we accounted for prey speed (i.e. the model with the highest predictive accuracy)"}
 
 knitr::include_graphics(
   here::here("outputs", "outputs_figures", "figure2.png")
@@ -251,13 +264,19 @@ knitr::include_graphics(
 ```
 
 
+
+
 # DISCUSSION
 
-It is generally assumed that predators increase prey consumption through time by acquiring hunting expertise [@dukas2019;@wooster.etal2023]. Yet, few studies have empirically tested this hypothesis in part because of the challenges of investigating direct predator-prey interactions in the wild. By capitalizing on a virtual predator-prey system where interactions were directly monitored, we found that a predator-player population in *Dead by Daylight* increased their hunting success with experience, suggesting that predator expertise was honed through extensive practice. Yet, there were important differences among individuals in the development of expertise, which was in part due to differences among individuals in the movement of the prey encountered.
+*revoir la première phrase, devrait intégrer les proies*
 
-Our results suggest that predator expertise is honed through extensive practice. The predator population displayed an asymptotic relationship between experience and success, wherein initial gains in success were significant but gradually stabilized as experience accumulated, consistent empirical observations of expertise in both humans and nonhuman animals [reviewed in @dukas2019] The prey's speed was important in mediating this pattern at the population level, probably because they also increased their speed as predators gained experience. We previously showed in *DBD* that faster movement is an effective strategy used by the prey to avoid predation [@fraserfranco.etal2022], and other studies have found that as well [@walker.etal2005;@kelley.magurran2011;@martin.etal2022]. This would explain why the relationship was concave in the model where we did not account for prey speed, because adept predators were probably encountering prey with higher speeds. Thus, our results suggest that predators can gain expertise and maintain success when they encounter prey that move at speeds lower or close to the population-average.
+It is generally assumed that predators increase prey consumption through time by acquiring hunting expertise [@dukas2019;@wooster.etal2023]. Yet, few studies have empirically tested how prey antipredator strategies mediate the acquisitio of hunting expertise because of the challenges of investigating direct predator-prey interactions in the wild. By capitalizing on a virtual predator-prey system where interactions were directly monitored, we found that a predator-player population in *Dead by Daylight* increased their hunting success with experience. Yet, there were important differences among individuals in the development of said expertise, which we found to be in part due to the movement of the prey encountered.
 
-Prey speed also mediated a portion of the differences among predator players in the development of their expertise, implying that prey antipredator behaviour can impair the development of an individual predator's expertise. Individual predator players probably differed in their capacity to adjust to difficult prey. For example, hunting faster prey requires specialized cognitive abilities and coordination that are energetically costly [@kelley.magurran2011]. Thus, predators that couldn't develop counter-strategies for faster prey were likely at a disadvantage. 
+Our results suggest that the acquisition of hunting expertise was honed through extensive practice. The predator population displayed an asymptotic relationship between experience and success, wherein initial gains in success were significant but gradually stabilized as experience accumulated. Our observations are consistent with empirical studies of expertise in both humans and nonhuman animals [reviewed in @dukas2019]. However, the prey's speed was important in mediating this pattern at the population level, probably because prey also increased their speed as predators gained experience. We previously showed in *DBD* that faster movement is an effective strategy used by the prey to avoid predation [@fraserfranco.etal2022], and other studies have found that as well [@walker.etal2005;@kelley.magurran2011;@martin.etal2022]. This would explain why the relationship was concave in the model where we did not account for prey speed, because adept predators were encountering prey with higher speeds. Thus, our results suggest that predators can gain expertise and maintain success when they encounter prey that move at speeds lower or close to the population-average.
+
+Prey speed also mediated differences among predator players in the development of their expertise, implying that prey antipredator behaviour can impair the development of an individual predator's expertise. Individual predator players probably differed in their capacity to adjust to difficult prey. For example, hunting faster prey requires specialized cognitive abilities and coordination that are energetically costly [@kelley.magurran2011]. Thus, predators that couldn't develop counter-strategies for faster prey were likely at a disadvantage. 
+
+*ici, répéter les études utilisant le camouflage, ensuite inclure la phrase des compromis, et conclure avec une avenue évolutive.*
 
 **Such trade-offs may reflect limitations in learning all the skills required to successfully hunt all types of prey [@healy1992;@belisle1997;@dukas2019], particularly if the skills required to hunt slower prey are nontransferable to faster prey.**
 
