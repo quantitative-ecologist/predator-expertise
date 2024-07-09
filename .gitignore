@@ -55,5 +55,6 @@ data/assemble_data.R
 data/FraserFranco-demande-partage-donnees.docx
 accessory_folders
 outputs/outputs_models
+dump
 .Rproj.user
 .radian_profile
