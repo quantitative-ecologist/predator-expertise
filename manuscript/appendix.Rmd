@@ -151,12 +151,12 @@ tabf
 
 \newpage
 
-```{r figS1, out.width = "100%", fig.cap = "**Figure S1.** Among individual differences in the development of hunting expertise in the model where we do not account for prey speed and average rank. The predators' hunting success (i.e. the probability of capturing the four prey) is on the y axis, and the predators' cumulative experience (i.e. the number of matches played prior to each observation) is on the x axis. Each fitted curve represents an individual predator. The individual curves are separated by differences between their first and last predicted value, and displayed as such in three distinct panels. (A) Individuals with a >0.5 unit increase in hunting success with experience (B) Individuals with a <-0.5 unit decrease in hunting success with experience. (C) Individuals that maintained a stable hunting success (between -0.5 and 0.5 unit change in hunting success)"}
+```{r figS1, out.width = "100%", fig.cap = "Figure S1. Posterior distributions of the median hunting success per group of players. The values were back transformed to probability scale and can be interpreted as the probability of capturing the four prey. Group 1: <50 matches, Group 2: between 50 and 99 matches, Group 3: between 100 and 299 matches, Group 4: > 299 (i.e. group in the main text)."}
 
 knitr::include_graphics(
   here::here(
     "outputs", "outputs_figures",
-    "appendix1_figureS1.png"
+    "figureS1.png"
   )
 )
 ```
