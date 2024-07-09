@@ -233,8 +233,8 @@ ggsave(
   p,
   filename = file.path(path, "figure2.png"),
   units = "px",
-  width = 3600,
-  height = 1500,
+  width = 3800,
+  height = 1700,
   dpi = 400
 )
 
