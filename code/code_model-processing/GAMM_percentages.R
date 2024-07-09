@@ -18,10 +18,10 @@
 library(brms)
 library(data.table)
 
-path <- file.path(getwd(), "outputs", "01_outputs_models")
+path <- file.path(getwd(), "outputs", "outputs_models")
 
-fit2 <- readRDS(file.path(path, "A2_GAMM.rds"))
-fit2p <- readRDS(file.path(path, "A2_GAMM-speed-rank.rds"))
+fit1 <- readRDS(file.path(path, "A2_GAMM-rank.rds"))
+fit2 <- readRDS(file.path(path, "A2_GAMM-speed-rank.rds"))
 
 
 
@@ -80,19 +80,19 @@ posterior_epred_beta_binomial2 <- function(prep) {
 # 2. Prepare data
 # ==========================================================================
 
+dat1 <- conditional_effects(
+  fit1, method = "fitted", effects = "Zcumul_xp:predator_id",
+  robust = FALSE, re_formula = NULL
+)
+
 dat2 <- conditional_effects(
   fit2, method = "fitted", effects = "Zcumul_xp:predator_id",
   robust = FALSE, re_formula = NULL
 )
 
-dat2p <- conditional_effects(
-  fit2p, method = "fitted", effects = "Zcumul_xp:predator_id",
-  robust = FALSE, re_formula = NULL
-)
-
 # Extract values in a table
+tab1 <- data.table(dat1[[1]])
 tab2 <- data.table(dat2[[1]])
-tab2p <- data.table(dat2p[[1]])
 
 
 # Back transform x-axis values
@@ -108,22 +108,30 @@ scaled_breaks <- sequence / standev
 xp <- unique(data[, .(predator_id, total_xp_pred)])
 
 # Compute non standardized cumulative XP
+tab1[, cumul_xp := (Zcumul_xp * standev) + mean(data$cumul_xp_pred)]
 tab2[, cumul_xp := (Zcumul_xp * standev) + mean(data$cumul_xp_pred)]
-tab2p[, cumul_xp := (Zcumul_xp * standev) + mean(data$cumul_xp_pred)]
 
 # Now merge the two tables adding the total XP
+tab1 <- merge(tab1, xp, by = "predator_id")
 tab2 <- merge(tab2, xp, by = "predator_id")
-tab2p <- merge(tab2p, xp, by = "predator_id")
 
 # Cut all matches where fitted values are above total XP
+tab1 <- tab1[cumul_xp <= total_xp_pred, ]
 tab2 <- tab2[cumul_xp <= total_xp_pred, ]
-tab2p <- tab2p[cumul_xp <= total_xp_pred, ]
 
 
 
 # Extract players with greatest increase and decrease ---------------------
 
 # Calculate 1st and final value
+tab1[, ":=" (
+  first = min(Zcumul_xp),
+  last = max(Zcumul_xp)),
+  by = predator_id]
+
+tab1[, equal1 := ifelse(Zcumul_xp == first, 1, 0), by = predator_id]
+tab1[, equal2 := ifelse(Zcumul_xp == last, 1, 0), by = predator_id]
+
 tab2[, ":=" (
   first = min(Zcumul_xp),
   last = max(Zcumul_xp)),
@@ -132,16 +140,20 @@ tab2[, ":=" (
 tab2[, equal1 := ifelse(Zcumul_xp == first, 1, 0), by = predator_id]
 tab2[, equal2 := ifelse(Zcumul_xp == last, 1, 0), by = predator_id]
 
-tab2p[, ":=" (
-  first = min(Zcumul_xp),
-  last = max(Zcumul_xp)),
-  by = predator_id]
-
-tab2p[, equal1 := ifelse(Zcumul_xp == first, 1, 0), by = predator_id]
-tab2p[, equal2 := ifelse(Zcumul_xp == last, 1, 0), by = predator_id]
-
 
 # First and last value into a second table
+tab1a <- tab1[
+    equal1 == 1 | equal2 == 1,
+    .(predator_id, Zcumul_xp, estimate__)
+]
+tab1a[, range := rep(c("min", "max"), 253)]
+
+tab1a <- dcast(
+  tab1a,
+  predator_id ~ range,
+  value.var = "estimate__"
+  )
+
 tab2a <- tab2[
     equal1 == 1 | equal2 == 1,
     .(predator_id, Zcumul_xp, estimate__)
@@ -154,42 +166,28 @@ tab2a <- dcast(
   value.var = "estimate__"
   )
 
-tab2pa <- tab2p[
-    equal1 == 1 | equal2 == 1,
-    .(predator_id, Zcumul_xp, estimate__)
-]
-tab2pa[, range := rep(c("min", "max"), 253)]
-
-tab2pa <- dcast(
-  tab2pa,
-  predator_id ~ range,
-  value.var = "estimate__"
-  )
-
 
 # Calculate the difference in predicted success between minimum and maximum xp
 # - value means decrease in success
 # + value means increase in success
+tab1a[, difference := plogis(tab1a$max) - plogis(tab1a$min)]
 tab2a[, difference := plogis(tab2a$max) - plogis(tab2a$min)]
-tab2pa[, difference := plogis(tab2pa$max) - plogis(tab2pa$min)]
 
+tab1a[
+    , c("max", "min")
+    := lapply(.SD, function(x) {plogis(x)}),
+    .SDcols = c("max", "min")
+]
 
-# Remerge the table with the original
 tab2a[
     , c("max", "min")
     := lapply(.SD, function(x) {plogis(x)}),
     .SDcols = c("max", "min")
 ]
 
-tab2pa[
-    , c("max", "min")
-    := lapply(.SD, function(x) {plogis(x)}),
-    .SDcols = c("max", "min")
-]
-
 # Extract players with the greatest increase and decrease in success
+quantile(tab1a$difference)
 quantile(tab2a$difference)
-quantile(tab2pa$difference)
 
 # ==========================================================================
 # ==========================================================================
@@ -206,21 +204,21 @@ quantile(tab2pa$difference)
 
 # percentages table
 val1 <- c(
-length(unique(tab2a[difference < -0.05, predator_id])) / 253,
-length(unique(tab2a[difference > 0.05, predator_id])) / 253,
+length(unique(tab1a[difference < -0.05, predator_id])) / 253,
+length(unique(tab1a[difference > 0.05, predator_id])) / 253,
 length(
-    unique(tab2a[
+    unique(tab1a[
         difference %between% c(-0.05, 0.05), predator_id]
     )
 ) / 253
 )
 
 val2 <- c(
-length(unique(tab2pa[difference < -0.05, predator_id])) / 253,
-length(unique(tab2pa[difference > 0.05, predator_id])) / 253,
+length(unique(tab2a[difference < -0.05, predator_id])) / 253,
+length(unique(tab2a[difference > 0.05, predator_id])) / 253,
 length(
     unique(
-        tab2pa[difference %between% c(-0.05, 0.05), predator_id]
+        tab2a[difference %between% c(-0.05, 0.05), predator_id]
     )
 ) / 253
 )
@@ -235,7 +233,7 @@ dat <- data.frame(
 
 # Save the data.frame ------------------------------------------------------
 
-path <- file.path(getwd(), "outputs", "03_outputs_model-processing")
+path <- file.path(getwd(), "outputs", "outputs_model-processing")
 saveRDS(dat, file = file.path(path, "GAMM_percentages.rds"))
 
 # ==========================================================================
