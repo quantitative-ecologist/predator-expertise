@@ -181,16 +181,15 @@ figdat_long[
 # Custom theme
 custom_theme <- theme(
   # axis values size
-  axis.text = element_text(size = 14, color = "black"),
+  axis.text = element_text(size = 15, color = "black"),
   # axis titles size
-  axis.title = element_text(size = 16),
-  strip.text.x = element_text(size = 14),
+  axis.title = element_text(size = 17),
+  strip.text.x = element_text(size = 15),
   panel.grid = element_blank(),
   panel.background = element_blank(),
-  legend.title = element_text(size = 14),
-  legend.text = element_text(size = 14),
-  legend.position = "top",
-  legend
+  legend.title = element_text(size = 15),
+  legend.text = element_text(size = 15),
+  legend.position = "top"
 )
 
 # Basic plot variables
@@ -235,8 +234,8 @@ ggsave(
   filename = file.path(path, "figure2.png"),
   units = "px",
   width = 3600,
-  height = 1400,
-  dpi = 300
+  height = 1500,
+  dpi = 400
 )
 
 # ==========================================================================
