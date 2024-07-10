@@ -4,9 +4,7 @@
 
 # ==========================================================================
 
-# Figure of the posterior parameters for:
-# - Groups of players that are randomly sampled
-# - The group studied in the paper
+# Figure of the relationship between prey speed and predator XP
 
 
 
@@ -26,34 +24,26 @@ library(viridis)
 
 # Import model -------------------------------------------------------------
 
-path <- file.path(getwd(), "ouputs", "outputs_models")
-fit <- readRDS(
-  file.path(path, "DHMLM-RandomSample.rds")
-)
-# ==========================================================================
-# ==========================================================================
+path <- file.path(getwd(), "outputs", "outputs_models")
+fit <- readRDS(file.path(path, "A2_GAMM-speed-rank.rds"))
 
 
 
+# Load the data ------------------------------------------------------------
 
-
-# ==========================================================================
-# 2. Extract posterior draws
-# ==========================================================================
-
-# Extraction with specified parameters
-draws <- data.table(
-  brms::as_draws_df(
-    x = fit,
-    variable = c(
-      "b_huntingsuccess_total_xp_predearly_quitters",
-      "b_huntingsuccess_total_xp_predengaged",
-      "b_huntingsuccess_total_xp_predmid_quitters",
-      "b_huntingsuccess_total_xp_predslightly_engaged"
-    )
-  )
+data <- fread(
+  "./data/FraserFrancoetal2023-data.csv",
+  select = c("predator_id",
+             "game_duration",
+             "pred_speed",
+             "prey_avg_speed",
+             "prey_avg_rank",
+             "cumul_xp_pred",
+             "total_xp_pred",
+             "hunting_success")
 )
 
+data[, predator_id := as.factor(predator_id)]
 # ==========================================================================
 # ==========================================================================
 
@@ -62,39 +52,76 @@ draws <- data.table(
 
 
 # ==========================================================================
-# 3. Reshape posterior draws table for plotting
+# 2. Compute the predictions
 # ==========================================================================
 
-# Convert to long format
-drawsl <- melt(
-  draws,
-  measure.vars = patterns("^b_huntingsuccess"),
-  variable.name = "group",
-  value.name = "value"
+# Post processing preparations for custom family ---------------------------
+
+expose_functions(fit, vectorize = TRUE)
+
+# Define the log likelihood function
+log_lik_beta_binomial2 <- function(i, prep) {
+  mu <- brms::get_dpar(prep, "mu", i = i)
+  phi <- brms::get_dpar(prep, "phi", i = i)
+  trials <- prep$data$vint1[i]
+  y <- prep$data$Y[i]
+  beta_binomial2_lpmf(y, mu, phi, trials)
+}
+
+# Define function for posterior_predict
+posterior_predict_beta_binomial2 <- function(i, prep, ...) {
+  mu <- brms::get_dpar(prep, "mu", i = i)
+  phi <- brms::get_dpar(prep, "phi", i = i)
+  trials <- prep$data$vint1[i]
+  beta_binomial2_rng(mu, phi, trials)
+}
+
+# Define function for posterior_epred
+posterior_epred_beta_binomial2 <- function(prep) {
+  mu <- brms::get_dpar(prep, "mu")
+  trials <- prep$data$vint1
+  trials <- matrix(trials, nrow = nrow(mu), ncol = ncol(mu), byrow = TRUE)
+  mu * trials
+}
+
+
+
+# Predictions --------------------------------------------------------------
+
+preds <- conditional_effects(
+  x = fit,
+  method = "fitted",
+  effects = "Zprey_speed",
+  prob = 0.89,
+  robust = TRUE,
+  re_formula = NULL,
+  conditions = data.frame(predator_id = NA)
 )
-drawsl <- drawsl[, c(4,5)] # delete the chain info
+preds_t <- data.table(preds[[1]])
 
-# Relabel
-drawsl[
-  , group := factor(
-    group,
-    levels = c("b_huntingsuccess_total_xp_predearly_quitters",
-               "b_huntingsuccess_total_xp_predengaged",
-               "b_huntingsuccess_total_xp_predmid_quitters",
-               "b_huntingsuccess_total_xp_predslightly_engaged"),
-    labels = c("Group 1",
-               "Group 4",
-               "Group 2",
-               "Group 3")
-  )
-]
 
-# Back-transform to probabiliy
-drawsl[, value_plogis := plogis(value)]
 
-# Calculate median values and back-transform
-medians <- drawsl[, .(median = median(value)), by = group]
-medians[, median_plogis := plogis(median)]
+# Transform values --------------------------------------------------------
+
+# Back transform x-axis values
+range_speed <- seq(
+  min(data$prey_avg_speed, na.rm = TRUE),
+  max(data$prey_avg_speed, na.rm = TRUE),
+  length.out = 5
+)
+sequence <- range_speed - mean(data$prey_avg_speed, na.rm = TRUE)
+standev <- sd(data$prey_avg_speed, na.rm = TRUE)
+scaled_breaks <- sequence / standev
+
+# Function to apply transformation
+# Computes non standardized cumulative XP
+func <- function(x) {
+  x[, prey_avg_speed := (Zprey_speed * standev) + mean(data$prey_avg_speed, na.rm = TRUE)]
+}
+
+# Apply function
+func(preds_t)
+
 # ==========================================================================
 # ==========================================================================
 
@@ -108,54 +135,51 @@ medians[, median_plogis := plogis(median)]
 
 # Prepare figure -----------------------------------------------------------
 
-# Custom theme
 custom_theme <- theme(
   # axis values size
-  axis.text = element_text(size = 14, color = "black"),
+  axis.text = element_text(face = "plain",
+                           size = 14,
+                           color = "black"),
+  # axis ticks lenght
+  axis.ticks.length = unit(.15, "cm"),
+  # axis ticks width
+  axis.ticks = element_line(linewidth = 0.90,
+                            color = "black"),
   # axis titles size
-  axis.title = element_text(size = 16),
-  strip.text.x = element_text(size = 14),
+  axis.title = element_text(size = 16,
+                            face = "plain",
+                            color = "black"),
+  axis.line = element_line(linewidth = 0.95,
+                           color = "black"),
+  legend.position = "none",
   panel.grid = element_blank(),
-  panel.background = element_blank(),
-  legend.title = element_text(size = 14),
-  legend.text = element_text(size = 14),
-  legend.position = "top"
+  panel.background = element_blank()
 )
 
-# Basic plot variables
 p <- ggplot(
-  data = drawsl,
-  aes(x = value_plogis, color = group, fill = group)
-)
-
-# Customize
-p <- p + geom_density(
-  alpha = 0.4,
-  position = "identity",
-  trim = TRUE
+  preds_t,
+  aes(x = Zprey_speed,
+      y = estimate__ / 4)
 ) +
-  geom_vline(
-    data = medians,
-    aes(xintercept = median_plogis, color = group),
-    linetype = "dashed",
-    show.legend = FALSE
+  geom_ribbon(
+    aes(
+      ymin = lower__ / 4,
+      ymax = upper__ / 4
+    ),
+    fill = "gray"
   ) +
-  scale_color_viridis(
-    discrete = TRUE,
-    breaks = c("Group 1", "Group 2", "Group 3", "Group 4")
-  ) +
-  scale_fill_viridis(
-    discrete = TRUE,
-    breaks = c("Group 1", "Group 2", "Group 3", "Group 4")
+  geom_line(linewidth = 1) +
+  ylab("Hunting success\n") +
+  ggtitle("Prey rank + prey speed") +
+  scale_y_continuous(
+    breaks = seq(0, 1, 0.25),
+    limits = c(0, 1)
   ) +
   scale_x_continuous(
-    breaks = seq(0.40, 0.60, 0.05),
-    limits = c(0.40, 0.60)
+    breaks = scaled_breaks,
+    labels = round(range_speed, digits = 2)
   ) +
-  labs(fill = "Group:", color = "Group:") +
-  ylab("Density\n") +
-  xlab("\nHunting success") +
-  theme_bw() +
+  xlab("\nPrey speed (m/s)") +
   custom_theme
 
 
@@ -167,10 +191,7 @@ path <- file.path(getwd(), "outputs", "outputs_figures")
 ggsave(
   p,
   filename = file.path(path, "figureS2.png"),
-  units = "px",
-  #width = 3800,
-  #height = 1700,
-  #dpi = 400
+  units = "px"
 )
 
 # ==========================================================================
