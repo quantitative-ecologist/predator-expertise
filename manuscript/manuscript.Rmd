@@ -1,5 +1,5 @@
 ---
-title: "Prey movement shapes the development of predator expertise in a virtual bi-trophic system"
+title: "Prey movement shapes the acquisition of predator expertise in a virtual bi-trophic system"
 output: 
   word_document:
     reference_docx: manuscript-styles.docx
