@@ -25,7 +25,7 @@ library(viridis)
 # Import model -------------------------------------------------------------
 
 path <- file.path(getwd(), "outputs", "outputs_models")
-fit <- readRDS(file.path(path, "A2_GAMM-speed-rank.rds"))
+fit <- readRDS(file.path(path, "GAMM-V.rds"))
 
 
 

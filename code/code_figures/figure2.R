@@ -25,8 +25,8 @@ library(ggplot2)
 
 path <- file.path(getwd(), "outputs", "outputs_models")
 
-fit1 <- readRDS(file.path(path, "A2_GAMM-rank.rds"))
-fit2 <- readRDS(file.path(path, "A2_GAMM-speed-rank.rds"))
+fit1 <- readRDS(file.path(path, "GAMM-II.rds"))
+fit2 <- readRDS(file.path(path, "GAMM-IV.rds"))
 
 # ==========================================================================
 # ==========================================================================

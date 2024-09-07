@@ -107,8 +107,8 @@ We tested the hypothesis that antipredator behaviour impairs the acquisition of 
 
 ```{r summary, cache = TRUE}
 # Import top 2 model fits
-fit1 <- readRDS(here::here("outputs", "outputs_models", "A2_GAMM-rank.rds"))
-fit2 <- readRDS(here::here("outputs", "outputs_models", "A2_GAMM-speed-rank.rds"))
+fit1 <- readRDS(here::here("outputs", "outputs_models", "GAMM-II.rds"))
+fit2 <- readRDS(here::here("outputs", "outputs_models", "GAMM-V.rds"))
 
 sum1 <- summary(fit1, robust = TRUE)$splines
 sum2 <- summary(fit2, robust = TRUE)$splines
