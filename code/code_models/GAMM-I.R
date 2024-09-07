@@ -1,6 +1,7 @@
 # ==========================================================================
 
-#           GAMM model GS - group-level smoother - hunting success
+#            GAMM model G - single common smoother - Hunting success
+#                             Model I in article
 
 # ==========================================================================
 
@@ -32,7 +33,7 @@ library(parallel)
 folder <- file.path("/home", "maxime11", "projects", "def-monti", 
                     "maxime11", "phd_project", "data")
 
-# Load data
+# Load data on compute canada
 data <- fread(
   file.path(folder, "FraserFrancoetalXXXX-data.csv"),
   select = c("predator_id",
@@ -64,7 +65,6 @@ data[, c(
     "Zprey_avg_rank"
     ) := lapply(.SD, standardize),
        .SDcols = c(3:6)]
-
 
 # ==========================================================================
 # ==========================================================================
@@ -113,9 +113,8 @@ stanvars <- stanvar(scode = stan_funs, block = "functions")
 model_formula <- brmsformula(
   hunting_success | vint(4) ~
     s(Zcumul_xp) +
-    s(Zcumul_xp, predator_id, bs = "fs") +
+    s(predator_id, bs = "re") +
     Zgame_duration +
-    Zprey_speed +
     Zprey_avg_rank
 )
 
@@ -128,9 +127,6 @@ priors <- c(
   set_prior("normal(1, 0.5)",
             class = "b",
             coef = "Zgame_duration"),
-  set_prior("normal(-1, 0.5)",
-            class = "b",
-            coef = "Zprey_speed"),
   set_prior("normal(0, 1)",
             class = "b",
             coef = "Zprey_avg_rank"),
@@ -146,7 +142,9 @@ priors <- c(
   # priors on phi
   set_prior("normal(2, 0.5)",
             class = "phi")
-)
+            )
+
+
 
 # ==========================================================================
 # ==========================================================================
@@ -159,23 +157,25 @@ priors <- c(
 # 3. Run the model
 # ==========================================================================
 
-model_gs <- brm(formula = model_formula,
-                family = beta_binomial2,
-                warmup = 500,
-                iter = 1500,
-                thin = 4,
-                chains = 4,
-                threads = threading(12),
-                backend = "cmdstanr",
-                inits = "0",
-                seed = 123,
-                prior = priors,
-                sample_prior = TRUE,
-                control = list(adapt_delta = 0.99),
-                data = data,
-                stanvars = stanvars)
+fit <- brm(
+  formula = model_formula,
+  family = beta_binomial2,
+  warmup = 500,
+  iter = 2500,
+  thin = 8,
+  chains = 4,
+  threads = threading(12),
+  backend = "cmdstanr",
+  inits = "0",
+  seed = 123,
+  prior = priors,
+  sample_prior = TRUE,
+  control = list(adapt_delta = 0.99),
+  data = data,
+  stanvars = stanvars
+)
 
-saveRDS(model_gs, file = "A2_GAMM-speed-rank.rds")
+saveRDS(fit, file = "GAMM-I.rds")
 
 # ==========================================================================
 # ==========================================================================

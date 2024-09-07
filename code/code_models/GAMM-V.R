@@ -1,6 +1,7 @@
 # ==========================================================================
 
 #           GAMM model GS - group-level smoother - hunting success
+#                           Model V in article
 
 # ==========================================================================
 
@@ -128,6 +129,9 @@ priors <- c(
   set_prior("normal(1, 0.5)",
             class = "b",
             coef = "Zgame_duration"),
+  set_prior("normal(-1, 0.5)",
+            class = "b",
+            coef = "Zprey_speed"),
   set_prior("normal(0, 1)",
             class = "b",
             coef = "Zprey_avg_rank"),
@@ -156,23 +160,25 @@ priors <- c(
 # 3. Run the model
 # ==========================================================================
 
-model_gs <- brm(formula = model_formula,
-                family = beta_binomial2,
-                warmup = 500,
-                iter = 1500,
-                thin = 4,
-                chains = 4,
-                threads = threading(12),
-                backend = "cmdstanr",
-                inits = "0",
-                seed = 123,
-                prior = priors,
-                sample_prior = TRUE,
-                control = list(adapt_delta = 0.99),
-                data = data,
-                stanvars = stanvars)
+fit <- brm(
+  formula = model_formula,
+  family = beta_binomial2,
+  warmup = 500,
+  iter = 1500,
+  thin = 4,
+  chains = 4,
+  threads = threading(12),
+  backend = "cmdstanr",
+  inits = "0",
+  seed = 123,
+  prior = priors,
+  sample_prior = TRUE,
+  control = list(adapt_delta = 0.99),
+  data = data,
+  stanvars = stanvars
+)
 
-saveRDS(model_gs, file = "A2_GAMM-rank.rds")
+saveRDS(fit, file = "GAMM-V.rds")
 
 # ==========================================================================
 # ==========================================================================
