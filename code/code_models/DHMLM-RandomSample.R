@@ -248,23 +248,25 @@ priors <- c(
 # =======================================================================
 
 # ( nitt - burnin ) / thin = 1000
-mv_model <- brm(pred_speed +
-                prey_speed +
-                success +
-                set_rescor(FALSE),
-                warmup = 1000,
-                iter = 23000,
-                thin = 88,
-                chains = 4,
-                inits = "0",
-                threads = threading(12),
-                backend = "cmdstanr",
-                seed = 123,
-                prior = priors,
-                sample_prior = TRUE,
-                control = list(adapt_delta = 0.99),
-                stanvars = stanvars,
-                data = data)
+mv_model <- brm(
+  pred_speed +
+  prey_speed +
+  success +
+  set_rescor(FALSE),
+  warmup = 1000,
+  iter = 23000,
+  thin = 88,
+  chains = 4,
+  inits = "0",
+  threads = threading(12),
+  backend = "cmdstanr",
+  seed = 123,
+  prior = priors,
+  sample_prior = TRUE,
+  control = list(adapt_delta = 0.99),
+  stanvars = stanvars,
+  data = data
+)
 
 saveRDS(mv_model, file = "DHMLM-RandomSample.rds")
 
