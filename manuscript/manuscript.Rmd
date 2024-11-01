@@ -84,7 +84,7 @@ Our population consists of `r toString(format(length(unique(dat$predator_id))))`
 
 We analyzed the mean speed of the prey group encountered by the predator. We measured the prey's speed as the mean travel speed of the four individual prey in a match (mean = `r toString(format(round(mean(dat$prey_avg_speed, na.rm = T), digits = 2), nsmall = 2))` ± `r toString(format(round(sd(dat$prey_avg_speed, na.rm = T), digits = 2), nsmall = 2))` m/s). We defined hunting success as the number of prey consumed during the match (min = `r toString(format(min(dat$hunting_success)))`, max = `r toString(format(max(dat$hunting_success)))`). Lastly, we defined the predator's cumulative experience as the number of matches played as the predator prior to the match being monitored. For example, the first match of a player would have a cumulative experience value of 0, while the tenth match would have a value of 9. We did not account for matches where predators played as the prey.
 
-## Statistical analyses 
+## Data analyses 
 
 ### Model specification
 
