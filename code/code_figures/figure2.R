@@ -240,3 +240,55 @@ ggsave(
 
 # ==========================================================================
 # ==========================================================================
+
+
+
+
+
+
+
+
+
+
+# Test ----------------------------------------------------------------------
+
+# Testing plot 2 with less information
+
+library(ggridges)
+
+p <- ggplot(data = figdat_long, aes(x = value, y = parameter, fill = model))
+
+#p + geom_violinhalf() #+ geom_jitter(width = 0.2, shape=20)
+
+fig2_test <- p + geom_density_ridges(
+  scale=0.75, alpha = 0.5,
+  quantile_lines = TRUE,
+  quantiles = 2,
+  rel_min_height = 0.0009
+  ) +
+  #geom_vline(
+  #  data = results,
+  #  aes(xintercept = median, color = model, linetype = parameter),
+  #  #linetype = model,
+  #  show.legend = FALSE
+  #) +
+  scale_color_manual(
+    values = c("#482173FF", "#51C56AFF"),
+    labels = c("Prey rank", "Prey rank + prey speed")
+  ) +
+  scale_fill_manual(
+    values = c("#482173FF", "#51C56AFF"),
+    labels = c("Prey rank", "Prey rank + prey speed")
+  ) +
+  labs(fill = "Model:", color = "Model:") +
+  ylab("") +
+  xlab("\nStandard deviation") +
+  theme_bw() +
+  custom_theme
+
+ggsave(
+  fig2_test,
+  filename = "fig2test.png",
+  width = 8,
+  height = 6
+)
