@@ -187,8 +187,8 @@ custom_theme <- theme(
   strip.text.x = element_text(size = 15),
   panel.grid = element_blank(),
   panel.background = element_blank(),
-  legend.title = element_text(size = 15),
-  legend.text = element_text(size = 15),
+  legend.title = element_text(size = 13),
+  legend.text = element_text(size = 13),
   legend.position = "top"
 )
 
