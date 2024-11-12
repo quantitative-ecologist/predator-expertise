@@ -25,8 +25,10 @@ library(ggplot2)
 
 path <- file.path(getwd(), "outputs", "outputs_models")
 
+path <- file.path(getwd(), "outputs", "outputs_models2024")
+
 fit1 <- readRDS(file.path(path, "GAMM-II.rds"))
-fit2 <- readRDS(file.path(path, "GAMM-IV.rds"))
+fit2 <- readRDS(file.path(path, "GAMM-V.rds"))
 
 # ==========================================================================
 # ==========================================================================
@@ -272,23 +274,23 @@ fig2_test <- p + geom_density_ridges(
   #  #linetype = model,
   #  show.legend = FALSE
   #) +
-  scale_color_manual(
-    values = c("#482173FF", "#51C56AFF"),
-    labels = c("Prey rank", "Prey rank + prey speed")
-  ) +
   scale_fill_manual(
     values = c("#482173FF", "#51C56AFF"),
     labels = c("Prey rank", "Prey rank + prey speed")
   ) +
-  labs(fill = "Model:", color = "Model:") +
+  labs(fill = "Model:") +
   ylab("") +
   xlab("\nStandard deviation") +
-  theme_bw() +
+  theme_classic() +
   custom_theme
+
+fig2_test
+
+path <- file.path(getwd(), "outputs", "outputs_figures")
 
 ggsave(
   fig2_test,
-  filename = "fig2test.png",
+  filename = file.path(path, "figure2.png"),
   width = 8,
   height = 6
 )
