@@ -276,7 +276,7 @@ fig2_test <- p + geom_density_ridges(
   #) +
   scale_fill_manual(
     values = c("#482173FF", "#51C56AFF"),
-    labels = c("Prey rank", "Prey rank + prey speed")
+    labels = c("II (Prey rank)", "V (Prey rank + prey speed)")
   ) +
   labs(fill = "Model:") +
   ylab("") +
