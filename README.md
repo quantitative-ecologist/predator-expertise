@@ -6,7 +6,7 @@
 
 Online repository to reproduce the results presented in :
 
-Fraser Franco, M., Santostefano, F., Martin, G. A., Julien, Kelly, Clint D., Montiglio, P.-O. (submitted to *The American Naturalist*) Prey movement shapes the development of predator expertise in a virtual bi-trophic system.
+Fraser Franco, M., Santostefano, F., Martin, G. A., Julien, Kelly, Clint D., Montiglio, P.-O. (XXXX) Prey movement shapes the acquisition of predator expertise in a virtual bi-trophic system.
 
 ## General coding workflow
 
