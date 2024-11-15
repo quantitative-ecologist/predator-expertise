@@ -276,9 +276,9 @@ fig2_test <- p + geom_density_ridges(
   #) +
   scale_fill_manual(
     values = c("#482173FF", "#51C56AFF"),
-    labels = c("II (Prey rank)", "V (Prey rank + prey speed)")
+    labels = c("Model II: prey rank", "Model V: prey rank + prey speed")
   ) +
-  labs(fill = "Model:") +
+  labs(fill = " ") +
   ylab("") +
   xlab("\nStandard deviation") +
   theme_classic() +
@@ -291,6 +291,6 @@ path <- file.path(getwd(), "outputs", "outputs_figures")
 ggsave(
   fig2_test,
   filename = file.path(path, "figure2.png"),
-  width = 8,
+  width = 8.5,
   height = 6
 )
