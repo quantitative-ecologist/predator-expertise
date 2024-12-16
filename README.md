@@ -24,7 +24,7 @@ You will find the specific outputs generated from the R scripts in the [outputs]
 
 ## Workflow to compute the models
 
-I ran all the models on [Cedar](https://docs.alliancecan.ca/wiki/Cedar), a computer cluster managed by the [Digital Research Alliance of Canada](https://www.alliancecan.ca/en). You can open the .sh files in the [jobs_slurm](./jobs_slurm) folder to see the computer specifications used to run the models. The computer cluster runs on CentOS Linux 7.
+I ran all the models on [Cedar](https://docs.alliancecan.ca/wiki/Cedar), a computer cluster managed by the [Digital Research Alliance of Canada](https://www.alliancecan.ca/en). The computer cluster runs on CentOS Linux 7.
 
 Here is a table showing the workflow employed to generate the model outputs using R. This workflow is exclusively for `.R` files used to compute the Bayesian models with the "brms" package (see the [code_models](./code/code_models) folder).
 
