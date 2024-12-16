@@ -1,0 +1,42 @@
+# ===========================================================================
+ 
+#				                        Metadata for :				                      #
+#           Prey movement shapes the acquisition of predator expertise
+#                        in a virtual bi-trophic system                     #
+
+# ===========================================================================
+
+Source : Behaviour Interactive
+License : This work is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc/4.0/ or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
+
+# ------------------------------------------------------
+# File name: FraserFrancoetal2023-data.csv
+# Number of columns: 15
+# Number of rows: 100 412 (individual matches)
+# ------------------------------------------------------
+
+# Columns 1 to 8
+# Match information
+# -----------------------
+timestamp       (POSIXct) : the timestamp when the match was launched (yyyy:mm:dd hh:mm:ss)
+match_id        (chr)     : the ID of the match
+game_mode       (chr)     : the game mode (online only)
+realm_id        (chr)     : the ID of the game environment theme where the match was played
+environment_id  (chr)     : the ID of the game environment where the match was played
+avatar_id       (chr)     : the predator avatar ID chosen by the player for the match
+predator_id     (chr)     : the ID of the predator player
+game_duration   (num)     : the match duration (seconds)
+
+# Columns 9 to 15
+# Player experience, behaviours, and outcome
+# -----------------------
+prey_avg_rank   (integer) : the averaged rank of the four prey players
+total_xp_pred   (integer) : The number of matches played by the player for the whole period
+cumul_xp_pred   (integer) : The cumulative amount of matches played prior to a specific match
+hunting_success (integer) : number of prey killed by the predator player in the match
+points_predator (integer) : the amount of bloodpoints scored by the predator player in the match
+pred_speed      (num) : predator average travel speed (m/s)
+prey_avg_speed  (num) : the average travel speed of the four prey (m/s)
+
+# ------------------------------------------------------
+# ------------------------------------------------------
