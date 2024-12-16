@@ -1,6 +1,6 @@
 # ===========================================================================
  
-#				                        Metadata for :				                      #
+#                               Metadata for :				                          #
 #           Prey movement shapes the acquisition of predator expertise
 #                        in a virtual bi-trophic system                     #
 
