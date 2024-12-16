@@ -1,4 +1,4 @@
-# Online repository for Fraser Franco et al. (XXXX)
+# Online repository
 
 ![](https://img.shields.io/badge/license-CC%20BY--NC%204.0-green?style=for-the-badge)
 
@@ -6,7 +6,7 @@
 
 Online repository to reproduce the results presented in :
 
-Fraser Franco, M., Santostefano, F., Martin, G. A., Julien, Kelly, Clint D., Montiglio, P.-O. (2024) Prey movement shapes the acquisition of predator expertise in a virtual bi-trophic system. *BioRxiv*. https://doi.org/10.1101/2024.11.15.621573
+Prey movement shapes the acquisition of predator expertise in a virtual bi-trophic system. (2024). *BioRxiv*. https://doi.org/10.1101/2024.11.15.621573
 
 ## General coding workflow
 
