@@ -20,7 +20,7 @@ Here are the steps highlighting the process with a link to the code subfolders :
 4. [Produce figures](./code/code_figures)
 
 
-You will find the specific outputs generated from the R scripts in the [outputs](./outputs) folder. Each output file has a number that correponds to the R script used to generate it.
+You will find the specific outputs generated from the R scripts in the [outputs](./outputs) folder.
 
 ## Workflow to compute the models
 
