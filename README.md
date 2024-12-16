@@ -16,7 +16,7 @@ Here are the steps highlighting the process with a link to the code subfolders :
 
 1. [Run models](./code/code_models)
 2. [Model validation](./code/code_model-validation)
-3. [Model processing](./code/model-processing)
+3. [Model processing](./code/code_model-processing)
 4. [Produce figures](./code/code_figures)
 
 
