@@ -57,5 +57,6 @@ accessory_folders
 outputs/outputs_models
 outputs/outputs_models2024
 dump
+test
 .Rproj.user
 .radian_profile
