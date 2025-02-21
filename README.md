@@ -1,4 +1,4 @@
-# Online repository for Fraser Franco et al. (XXXX)
+# Online repository
 
 ![](https://img.shields.io/badge/license-CC%20BY--NC%204.0-green?style=for-the-badge)
 
@@ -6,7 +6,7 @@
 
 Online repository to reproduce the results presented in :
 
-Fraser Franco, M., Santostefano, F., Martin, G. A., Julien, Kelly, Clint D., Montiglio, P.-O. (submitted to *The American Naturalist*) Prey movement shapes the development of predator expertise in a virtual bi-trophic system.
+Prey movement shapes the acquisition of predator expertise in a virtual bi-trophic system. (2024). *BioRxiv*. https://doi.org/10.1101/2024.11.15.621573
 
 ## General coding workflow
 
@@ -16,15 +16,15 @@ Here are the steps highlighting the process with a link to the code subfolders :
 
 1. [Run models](./code/code_models)
 2. [Model validation](./code/code_model-validation)
-3. [Model processing](./code/model-processing)
+3. [Model processing](./code/code_model-processing)
 4. [Produce figures](./code/code_figures)
 
 
-You will find the specific outputs generated from the R scripts in the [outputs](./outputs) folder. Each output file has a number that correponds to the R script used to generate it.
+You will find the specific outputs generated from the R scripts in the [outputs](./outputs) folder.
 
 ## Workflow to compute the models
 
-I ran all the models on [Cedar](https://docs.alliancecan.ca/wiki/Cedar), a computer cluster managed by the [Digital Research Alliance of Canada](https://www.alliancecan.ca/en). You can open the .sh files in the [jobs_slurm](./jobs_slurm) folder to see the computer specifications used to run the models. The computer cluster runs on CentOS Linux 7.
+I ran all the models on [Cedar](https://docs.alliancecan.ca/wiki/Cedar), a computer cluster managed by the [Digital Research Alliance of Canada](https://www.alliancecan.ca/en). The computer cluster runs on CentOS Linux 7.
 
 Here is a table showing the workflow employed to generate the model outputs using R. This workflow is exclusively for `.R` files used to compute the Bayesian models with the "brms" package (see the [code_models](./code/code_models) folder).
 
