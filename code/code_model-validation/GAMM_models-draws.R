@@ -1,7 +1,7 @@
 # =============================================================================
 
-#                       Inspect prior and posterior draws
-#                               from GAMM-GLMM models
+#                      Inspect prior and posterior draws
+#                               from GAMM models
 
 # =============================================================================
 
@@ -23,22 +23,22 @@
 
 # Prepare model draws ---------------------------------------------------------
 
- path <- file.path(getwd(), "outputs", "01_outputs_models")
+ path <- file.path(getwd(), "outputs", "outputs_models")
 
  # Import model in R session
- mod1 <- readRDS(file.path(path, "A1_GAMM-rank.rds"))
- mod2 <- readRDS(file.path(path, "A2_GAMM-rank.rds"))
- mod3 <- readRDS(file.path(path, "A3_GAMM-rank.rds"))
- mod2p <- readRDS(file.path(path, "A2_GAMM-speed-rank.rds"))
- mod3p <- readRDS(file.path(path, "A3_GAMM-speed-rank.rds"))
+ mod1 <- readRDS(file.path(path, "GAMM-I.rds"))
+ mod2 <- readRDS(file.path(path, "GAMM-II.rds"))
+ mod3 <- readRDS(file.path(path, "GAMM-III.rds"))
+ mod4 <- readRDS(file.path(path, "GAMM-IV.rds"))
+ mod5 <- readRDS(file.path(path, "GAMM-V.rds"))
 
 
  # Extract posterior draws
  posterior_fit1 <- as_draws_df(mod1)
  posterior_fit2 <- as_draws_df(mod2)
  posterior_fit3 <- as_draws_df(mod3)
- posterior_fit4 <- as_draws_df(mod2p)
- posterior_fit5 <- as_draws_df(mod3p)
+ posterior_fit4 <- as_draws_df(mod4)
+ posterior_fit5 <- as_draws_df(mod5)
 
 # =============================================================================
 # =============================================================================
