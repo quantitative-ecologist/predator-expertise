@@ -1,7 +1,7 @@
 # ==========================================================================
 
-#            GAMM model G - single common smoother - Hunting success
-#                             Model I in article
+#           GAMM model GS - group level smoother - Hunting success
+#                     Model I without rank in article
 
 # ==========================================================================
 
@@ -79,43 +79,23 @@ data[, c(
 
 
 
-# Compute the custom family ------------------------------------------------
+# Model formula ------------------------------------------------------------
 
-beta_binomial2 <- custom_family(
-  "beta_binomial2", dpars = c("mu", "phi"),
-  links = c("logit", "log"), lb = c(NA, 0),
-  type = "int", vars = "vint1[n]"
+model_formula <- brmsformula(
+  hunting_success | trials(4) ~
+    s(Zcumul_xp) +
+    s(Zcumul_xp, predator_id, bs = "fs") +
+    Zgame_duration
 )
 
 
 
-# Function -----------------------------------------------------------------
+# Inspect priors -----------------------------------------------------------
 
-stan_funs <- "
-  real beta_binomial2_lpmf(int y, real mu, real phi, int T) {
-    return beta_binomial_lpmf(y | T, mu * phi, (1 - mu) * phi);
-  }
-  int beta_binomial2_rng(real mu, real phi, int T) {
-    return beta_binomial_rng(T, mu * phi, (1 - mu) * phi);
-  }
-"
-
-
-
-# Variables ----------------------------------------------------------------
-
-stanvars <- stanvar(scode = stan_funs, block = "functions")
-
-
-
-# Model formula ------------------------------------------------------------
-
-model_formula <- brmsformula(
-  hunting_success | vint(4) ~
-    s(Zcumul_xp) +
-    s(predator_id, bs = "re") +
-    Zgame_duration +
-    Zprey_avg_rank
+get_prior(
+  formula = model_formula,
+  family = beta_binomial(),
+  data = data
 )
 
 
@@ -124,27 +104,32 @@ model_formula <- brmsformula(
 
 priors <- c(
   # priors on fixed effects
-  set_prior("normal(1, 0.5)",
-            class = "b",
-            coef = "Zgame_duration"),
-  set_prior("normal(0, 1)",
-            class = "b",
-            coef = "Zprey_avg_rank"),
-  set_prior("normal(0, 2)",
-            class = "b",
-            coef = "sZcumul_xp_1"),
+  set_prior(
+    "normal(1, 0.5)",
+    class = "b",
+    coef = "Zgame_duration"
+  ),
+  set_prior(
+    "normal(0, 2)",
+    class = "b",
+    coef = "sZcumul_xp_1"
+  ),
   # prior on the intercept
-  set_prior("normal(0, 0.5)",
-            class = "Intercept"),
+  set_prior(
+    "normal(0, 0.5)",
+    class = "Intercept"
+  ),
   # prior on sds parameters
-  set_prior("normal(0, 0.5)",
-            class = "sds"),
+  set_prior(
+    "normal(0, 0.5)",
+    class = "sds"
+  ),
   # priors on phi
-  set_prior("normal(2, 0.5)",
-            class = "phi")
-            )
-
-
+  set_prior(
+    "normal(2, 0.5)",
+    class = "phi"
+  )
+)
 
 # ==========================================================================
 # ==========================================================================
@@ -159,20 +144,19 @@ priors <- c(
 
 fit <- brm(
   formula = model_formula,
-  family = beta_binomial2,
+  family = beta_binomial(),
   warmup = 500,
   iter = 2500,
   thin = 8,
   chains = 4,
-  threads = threading(12),
+  threads = threading(4),
   backend = "cmdstanr",
-  inits = "0",
+  init = "0",
   seed = 123,
   prior = priors,
   sample_prior = TRUE,
   control = list(adapt_delta = 0.99),
-  data = data,
-  stanvars = stanvars
+  data = data
 )
 
 saveRDS(fit, file = "GAMM-I.rds")
