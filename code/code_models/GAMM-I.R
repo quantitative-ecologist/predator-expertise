@@ -149,7 +149,7 @@ fit <- brm(
   iter = 1500,
   thin = 4,
   chains = 4,
-  threads = threading(4),
+  threads = threading(12),
   backend = "cmdstanr",
   init = "0",
   seed = 123,
