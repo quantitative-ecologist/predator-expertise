@@ -527,6 +527,13 @@
       "Repository": "CRAN",
       "Hash": "24b224366f9c2e7534d2344d10d59211"
     },
+    "hexbin": {
+      "Package": "hexbin",
+      "Version": "1.28.5",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "10a44851f04ff2d0e26b1c84c38d914a"
+    },
     "highr": {
       "Package": "highr",
       "Version": "0.9",
@@ -844,10 +851,10 @@
     },
     "purrr": {
       "Package": "purrr",
-      "Version": "0.3.4",
+      "Version": "1.0.4",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "97def703420c8ab10d8f0e6c72101e02"
+      "Hash": "cc8b5d43f90551fa6df0a6be5d640a4f"
     },
     "quantreg": {
       "Package": "quantreg",
@@ -893,10 +900,10 @@
     },
     "rlang": {
       "Package": "rlang",
-      "Version": "1.1.0",
+      "Version": "1.1.6",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "dc079ccd156cde8647360f473c1fa718"
+      "Hash": "892124978869b74935dc3934c42bfe5a"
     },
     "rmarkdown": {
       "Package": "rmarkdown",
@@ -1089,10 +1096,17 @@
     },
     "vctrs": {
       "Package": "vctrs",
-      "Version": "0.6.1",
-      "Source": "Repository",
+      "Version": "0.6.5",
+      "Source": "CRAN",
       "Repository": "CRAN",
-      "Hash": "06eceb3a5d716fd0654cc23ca3d71a99"
+      "RemoteType": "standard",
+      "RemotePkgRef": "vctrs",
+      "RemoteRef": "vctrs",
+      "RemoteRepos": "https://cran.rstudio.com",
+      "RemoteReposName": "CRAN",
+      "RemotePkgPlatform": "source",
+      "RemoteSha": "0.6.5",
+      "Hash": "c03fa420630029418f7e6da3667aac4a"
     },
     "viridis": {
       "Package": "viridis",
