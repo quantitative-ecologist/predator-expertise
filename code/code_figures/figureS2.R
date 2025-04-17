@@ -136,6 +136,8 @@ func(preds_t)
 # Prepare figure -----------------------------------------------------------
 
 custom_theme <- theme(
+  # Title
+  plot.title = element_text(size = 8),
   # axis values size
   axis.text = element_text(face = "plain",
                            size = 14,
@@ -158,7 +160,7 @@ custom_theme <- theme(
 
 p <- ggplot(
   preds_t,
-  aes(x = Zprey_speed,
+  aes(x = prey_avg_speed,
       y = estimate__ / 4)
 ) +
   geom_ribbon(
@@ -170,14 +172,14 @@ p <- ggplot(
   ) +
   geom_line(linewidth = 1) +
   ylab("Hunting success\n") +
-  ggtitle("Prey rank + prey speed") +
+  ggtitle("Model V: game duration + prey rank + prey speed") +
   scale_y_continuous(
     breaks = seq(0, 1, 0.25),
     limits = c(0, 1)
   ) +
   scale_x_continuous(
-    breaks = scaled_breaks,
-    labels = round(range_speed, digits = 2)
+    breaks = seq(0, 4, 1),
+    limits = c(0.5, 4)
   ) +
   xlab("\nPrey speed (m/s)") +
   custom_theme
@@ -191,7 +193,10 @@ path <- file.path(getwd(), "outputs", "outputs_figures")
 ggsave(
   p,
   filename = file.path(path, "figureS2.png"),
-  units = "px"
+  units = "in",
+  dpi = 300,
+  width = 5,
+  height = 5
 )
 
 # ==========================================================================

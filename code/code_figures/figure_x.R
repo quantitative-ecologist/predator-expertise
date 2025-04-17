@@ -55,11 +55,10 @@ standardize <- function(x) {
   (x - mean(x, na.rm = TRUE)) / sd(x, na.rm = TRUE)
 }
 
-data[, c(
-    "Zgame_duration",
-    "Zprey_avg_rank"
-    ) := lapply(.SD, standardize),
-       .SDcols = c(2,4)]
+data[,
+  c("Zgame_duration", "Zprey_avg_rank") := lapply(.SD, standardize),
+  .SDcols = c(2, 4)
+]
 
 # ==========================================================================
 # ==========================================================================
@@ -218,10 +217,9 @@ ggsave(
   p,
   filename = file.path(path, "figurex.png"),
   units = "in",
-  dpi=300,
-  width=5,
-  height=5
-
+  dpi = 300,
+  width = 5,
+  height = 5
 )
 
 # ==========================================================================
