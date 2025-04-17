@@ -48,11 +48,9 @@ standardize <- function(x) {
   (x - mean(x, na.rm = TRUE)) / sd(x, na.rm = TRUE)
 }
 
-data[, c(
-    "Zgame_duration",
-    "Zprey_avg_rank"
-    ) := lapply(.SD, standardize),
-       .SDcols = c(2,4)]
+data[, c("Zgame_duration", "Zprey_avg_rank") := lapply(.SD, standardize),
+  .SDcols = c(2, 4)
+]
 
 # ==========================================================================
 # ==========================================================================
@@ -95,7 +93,7 @@ priors <- c(
     coef = "Zgame_duration"
   ),
   set_prior(
-    "normal(0.5, 1)",
+    "normal(-0.5, 1)",
     class = "b",
     coef = "Zprey_avg_rank"
   ),
