@@ -59,13 +59,11 @@ standardize <- function(x) {
 }
 
 data[
-  , c(
-    "Zprey_speed",
-    "Zgame_duration",
-    "Zcumul_xp",
-    "Zprey_avg_rank"
-  ) := lapply(.SD, standardize),
-  .SDcols = c(3:6)
+  ,
+  c("Zprey_speed", "Zgame_duration", "Zcumul_xp", "Zprey_avg_rank") := lapply(
+    .SD, standardize
+  ),
+  .SDcols = c("Zprey_speed", "Zgame_duration", "Zcumul_xp", "Zprey_avg_rank")
 ]
 
 
@@ -155,14 +153,14 @@ fit <- brm(
   family = beta_binomial(),
   warmup = 500,
   iter = 1500,
-  thin = 4,
+  thin = 1,
   chains = 4,
-  threads = threading(12),
+  threads = threading(8),
   backend = "cmdstanr",
   init = "0",
   seed = 123,
   prior = priors,
-  sample_prior = TRUE,
+  sample_prior = FALSE,
   control = list(adapt_delta = 0.99),
   data = data
 )
