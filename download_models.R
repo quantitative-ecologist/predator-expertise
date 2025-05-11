@@ -11,10 +11,12 @@ fitted_models <- c(
   "GAMM-III.rds", 
   "GAMM-IV.rds", 
   "GAMM-V.rds"
+  "LM-PreySpeed.rds"
 )
 
 # Define the local directory to save the downloaded models
 local_dir <- file.path(getwd(), "outputs", "outputs_models")
+if (!dir.exists(local_dir)) dir.create(local_dir, recursive = TRUE)
 
 # Retrieve the OSF project
 project <- osf_retrieve_node(project_id)
