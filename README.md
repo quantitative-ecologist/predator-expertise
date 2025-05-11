@@ -26,7 +26,7 @@ To download the files locally:
 - Open a terminal
 - Go to the root folder of the project
 - Type `make download-models` in your terminal
-- This will add all the model output files in a subfolder within [outputs](./outputs) called `outputs_models`
+- This will create a subfolder within [outputs](./outputs) called `outputs_models` and download all the model output files in it
 
 ---
 ### General coding workflow
