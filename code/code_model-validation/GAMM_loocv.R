@@ -78,8 +78,8 @@ loo_tab <- loo_compare(loo1, loo2, loo3, loo4, loo5)
 
 # Compute table with complete information
 loo_table <- data.table(
- print(loo_tab, simplify = FALSE),
- keep.rownames = TRUE
+  print(loo_tab, simplify = FALSE),
+  keep.rownames = TRUE
 )
 setnames(loo_table, "rn", "model")
 

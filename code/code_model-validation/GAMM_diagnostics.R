@@ -30,7 +30,7 @@ model_files <- list(
 for (mod in names(model_files)) {
   file_name <- model_files[[mod]]
   file_path <- file.path(model_path, file_name)
-  png_path <- file.path(output_path, paste0(mod, "_checks.png"))
+  png_path <- file.path(output_path, paste0("checks_", mod, ".png"))
 
   if (!file.exists(file_path)) {
     warning(sprintf("Missing model file: %s\nPlease download it from OSF and place it in: %s", file_name, model_path))
