@@ -18,6 +18,9 @@ Prey movement shapes the acquisition of predator expertise in a virtual bi-troph
 3. In the root folder, open R and run `renv::restore()`, this will install all the packages with proper versions from the `renv.lock` file
 4. Download the model outputs by following the steps described below
 
+** Note for Windows users: refrain from putting the project inside OneDrive as it struggles with renv. Just put the project in a place that is not tracked by OneDrive. **
+
+
 #### Download the model outputs
 
 The model fitting cannot be reproduced on your personal computer as it requires important computing resources. The model output files (`.rds`) are hosted in this [OSF repository](https://osf.io/hdv38/).
