@@ -13,4 +13,4 @@ module load r-bundle-bioconductor/3.20
 module load r/4.4.0
 
 export R_LIBS="/home/maxime11/R/x86_64-pc-linux-gnu-library/4.4"
-Rscript GAMM-I.R
+Rscript fit_GAMM-I.R
