@@ -10,7 +10,7 @@ fitted_models <- c(
   "GAMM-II.rds", 
   "GAMM-III.rds", 
   "GAMM-IV.rds", 
-  "GAMM-V.rds"
+  "GAMM-V.rds",
   "LM-PreySpeed.rds"
 )
 
