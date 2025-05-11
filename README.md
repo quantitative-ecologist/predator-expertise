@@ -15,15 +15,17 @@ Prey movement shapes the acquisition of predator expertise in a virtual bi-troph
 
 1. Clone the repository using `git clone https://github.com/quantitative-ecologist/predator-expertise.git`
 2. Install [`renv`](https://rstudio.github.io/renv/)
-3. In the root folder, open R and run `renv::restore()`
-4. Download the model outputs by follwing the steps described below
+3. In the root folder, open R and run `renv::restore()`, this will install all the packages with proper versions from the `renv.lock` file
+4. Download the model outputs by following the steps described below
 
 #### Download the model outputs
 
-The model fitting cannot be reproduced on your personal computer as it requires important computing resources.
+The model fitting cannot be reproduced on your personal computer as it requires important computing resources. The model output files (`.rds`) are hosted in this [OSF repository](https://osf.io/hdv38/).
 
-- The model output files (`.rds`) are hosted in this [OSF repository](https://osf.io/hdv38/)
-- To download them locally, go to the root folder and type `make download-models` in your terminal
+To download the files locally: 
+- Open a terminal
+- Go to the root folder of the project
+- Type `make download-models` in your terminal
 - This will add all the model output files in a subfolder within [outputs](./outputs) called `outputs_models`
 
 ---
