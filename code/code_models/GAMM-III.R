@@ -64,7 +64,7 @@ data[
   c("Zprey_speed", "Zgame_duration", "Zcumul_xp", "Zprey_avg_rank") := lapply(
     .SD, standardize
   ),
-  .SDcols = c("Zprey_speed", "Zgame_duration", "Zcumul_xp", "Zprey_avg_rank")
+  .SDcols = c("prey_avg_speed", "game_duration", "cumul_xp_pred", "prey_avg_rank")
 ]
 
 # ==========================================================================
@@ -126,7 +126,7 @@ priors <- c(
   ),
   # priors on phi
   set_prior(
-    "normal(2, 0.5)",
+    "normal(log(2), 0.5)",
     class = "phi"
   )
 )
