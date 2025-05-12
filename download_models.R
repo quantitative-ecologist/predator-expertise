@@ -11,7 +11,8 @@ fitted_models <- c(
   "GAMM-III.rds", 
   "GAMM-IV.rds", 
   "GAMM-V.rds",
-  "LM-PreySpeed.rds"
+  "LM-PreySpeed.rds",
+  "GLM-RandomSample.rds"
 )
 
 # Define the local directory to save the downloaded models
