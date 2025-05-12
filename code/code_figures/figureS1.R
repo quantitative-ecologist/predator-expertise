@@ -26,9 +26,9 @@ library(viridis)
 
 # Import model -------------------------------------------------------------
 
-path <- file.path(getwd(), "ouputs", "outputs_models")
+path <- file.path(getwd(), "outputs", "outputs_models")
 fit <- readRDS(
-  file.path(path, "DHMLM-RandomSample.rds")
+  file.path(path, "GLM-RandomSample.rds")
 )
 # ==========================================================================
 # ==========================================================================
@@ -46,10 +46,10 @@ draws <- data.table(
   brms::as_draws_df(
     x = fit,
     variable = c(
-      "b_huntingsuccess_total_xp_predearly_quitters",
-      "b_huntingsuccess_total_xp_predengaged",
-      "b_huntingsuccess_total_xp_predmid_quitters",
-      "b_huntingsuccess_total_xp_predslightly_engaged"
+      "b_total_xp_predearly_quitters",
+      "b_total_xp_predengaged",
+      "b_total_xp_predmid_quitters",
+      "b_total_xp_predslightly_engaged"
     )
   )
 )
@@ -68,7 +68,7 @@ draws <- data.table(
 # Convert to long format
 drawsl <- melt(
   draws,
-  measure.vars = patterns("^b_huntingsuccess"),
+  measure.vars = patterns("^b_total_xp"),
   variable.name = "group",
   value.name = "value"
 )
@@ -78,10 +78,10 @@ drawsl <- drawsl[, c(4,5)] # delete the chain info
 drawsl[
   , group := factor(
     group,
-    levels = c("b_huntingsuccess_total_xp_predearly_quitters",
-               "b_huntingsuccess_total_xp_predengaged",
-               "b_huntingsuccess_total_xp_predmid_quitters",
-               "b_huntingsuccess_total_xp_predslightly_engaged"),
+    levels = c("b_total_xp_predearly_quitters",
+               "b_total_xp_predengaged",
+               "b_total_xp_predmid_quitters",
+               "b_total_xp_predslightly_engaged"),
     labels = c("Group 1",
                "Group 4",
                "Group 2",
@@ -149,8 +149,8 @@ p <- p + geom_density(
     breaks = c("Group 1", "Group 2", "Group 3", "Group 4")
   ) +
   scale_x_continuous(
-    breaks = seq(0.40, 0.60, 0.05),
-    limits = c(0.40, 0.60)
+    breaks = seq(0, 1, 0.25),
+    limits = c(0, 1)
   ) +
   labs(fill = "Group:", color = "Group:") +
   ylab("Density\n") +
