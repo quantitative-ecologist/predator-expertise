@@ -4,6 +4,15 @@
 
 # =======================================================================
 
+
+
+
+
+# =======================================================================
+# Prepare session
+# =======================================================================
+
+
 # Load libraries
 options(mc.cores = parallel::detectCores())
 library(data.table)
@@ -25,28 +34,12 @@ model_files <- list(
   #GAMM_IV = "GAMM-IV.rds",
   #GAMM_V = "GAMM-V.rds"
 )
-
 # =======================================================================
-# Download missing model files from OSF
 # =======================================================================
 
-osf_base <- "https://osf.io/hdv38/download/"  # base URL to use for direct file links
 
-for (mod in names(model_files)) {
-  file_name <- model_files[[mod]]
-  file_path <- file.path(model_path, file_name)
 
-  if (!file.exists(file_path)) {
-    message("Attempting to download missing model: ", file_name)
-    url <- paste0(osf_base, file_name)
-    tryCatch({
-      download.file(url, destfile = file_path, mode = "wb", quiet = TRUE)
-      message("Downloaded: ", file_name)
-    }, error = function(e) {
-      warning("Could not download ", file_name, " from OSF. Please check the OSF repository.")
-    })
-  }
-}
+
 
 # =======================================================================
 # Load models and generate diagnostics
@@ -59,7 +52,7 @@ for (mod in names(model_files)) {
   trace_path <- file.path(output_path, paste0("trace_", mod, ".pdf"))
 
   if (!file.exists(file_path)) {
-    warning(sprintf("Missing model file: %s\nPlease download it from OSF and place it in: %s", file_name, model_path))
+    warning(sprintf("Missing model file: %s\nPlease download it from OSF following the steps described in the README: %s", file_name, model_path))
     next
   }
 
@@ -101,3 +94,6 @@ for (mod in names(model_files)) {
 
   message("Saved diagnostic plot for ", mod, " to: ", png_path)
 }
+
+# =======================================================================
+# =======================================================================
