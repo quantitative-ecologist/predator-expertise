@@ -44,7 +44,7 @@ if (!mod %in% names(model_files)) {
 
 file_name <- model_files[[mod]]
 file_path <- file.path(model_path, file_name)
-loo_path <- file.path(output_path, paste0(mod, "_loo.rds"))
+loo_path <- file.path(output_path, paste0("loo_", mod, ".rds"))
 
 # =======================================================================
 # =======================================================================
