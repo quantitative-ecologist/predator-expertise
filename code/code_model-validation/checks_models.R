@@ -9,9 +9,8 @@
 
 
 # =======================================================================
-# Prepare session
+# 1. Prepare session
 # =======================================================================
-
 
 # Load libraries
 options(mc.cores = parallel::detectCores())
@@ -52,7 +51,7 @@ if (!mod %in% names(model_files)) {
 
 
 # =======================================================================
-# Load models and generate diagnostics
+# 2. Load models and generate diagnostics
 # =======================================================================
 
 file_name <- model_files[[mod]]
