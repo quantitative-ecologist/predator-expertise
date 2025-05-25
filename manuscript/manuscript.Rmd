@@ -258,7 +258,7 @@ Prey speed did not influence among-individual differences in average hunting suc
 ```{r fig2, out.width = "100%", fig.cap = "**Figure 2**. Median posterior predictions of the relationship between prey speed and prey skill. The average speed of the prey group is on the y-axis, and the average rank of the prey group is on the x-axis. The colour gradient showcases the density of observations, with lighter colours indicating lower densities, and darker colours indicating higher densities of observations. Lower rank values indicate that the prey group is more skilled, while higher values indicate that the prey are less skilled"}
 
 knitr::include_graphics(
-  here::here("outputs", "outputs_figures", "figurex.png")
+  here::here("outputs", "outputs_figures", "figure2.png")
 )
 ```
 
