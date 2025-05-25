@@ -215,7 +215,7 @@ path <- file.path(getwd(), "outputs", "outputs_figures")
 
 ggsave(
   p,
-  filename = file.path(path, "figurex.png"),
+  filename = file.path(path, "figure2.png"),
   units = "in",
   dpi = 300,
   width = 5,

@@ -267,7 +267,7 @@ We also found strong evidence that the speed of the prey mediated the form of th
 ```{r fig3, out.width = "100%", fig.cap = "**Figure 3**. Posterior distributions of the standard deviation of individual-level parameters estimated by the GAMM. The parameters are displayed on the y axis, and their standard deviation are displayed on the x axis. The intercept and slope standard deviations refer to the linear components of the estimated relationship between hunting success and cumulative experience. The standard deviation of the wiggliness parameter refers to the shape of the curves (i.e. nonlinear component). The vertical lines are the medians of the posterior distributions. For each panel, the light-coloured distributions (i.e. green) are for the model with a shared trend where we did not account for prey speed (model II), and the darker-coloured distributions (i.e. purple) are for the model with a shared trend where we accounted for prey speed (model IV)."}
 
 knitr::include_graphics(
-  here::here("outputs", "outputs_figures", "figure2.png")
+  here::here("outputs", "outputs_figures", "figure3.png")
 )
 ```
 
