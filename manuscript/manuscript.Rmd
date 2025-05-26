@@ -139,7 +139,7 @@ Out of all five GAMM models, those that included a global smoother were better a
 
 # Open the loo table
 path <- file.path(here::here("outputs", "outputs_model-validation"))
-loo_tab <- data.table(readRDS(file.path(path, "GAMM_loo-cv-table.rds")))
+loo_tab <- data.table(readRDS(file.path(path, "loo-cv-table_GAMM.rds")))
 
 # Add model column
 loo_tab[
