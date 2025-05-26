@@ -47,6 +47,12 @@ To download the files locally:
 make download-models
 ```
 
+If you don't have the make command in your computer, you can also simply run the script from your terminal:
+
+```
+Rscript download_models.R
+```
+
 This will create a subfolder called `outputs_models` within [outputs](./outputs) and download all the model output files (`.rds`) in it.
 
 ---
