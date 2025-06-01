@@ -62,7 +62,7 @@ Prey use antipredator tactics such as camouflage to avoid detection and rapid es
 
 A recurring challenge impeding research on predator-prey behavioural interactions is the need to collect data simultaneously on both the predator and the prey. Here we mitigate these challenges by using *Dead by Daylight* as our study system, a videogame where four prey players must forage for resources while avoiding predation by a fifth player. Similar to agent-based simulations, *Dead by Daylight* provides controlled virtual environments to test ecological hypotheses [see @montiglio.etal2025 for a review], with the advantage of having real players that interact in the virtual space. In this game, the predator population comprises individuals that either ambush or hunt at high speeds (i.e., mean movement speed along an ambush-cursorial continuum of tactics), and their success is driven by the movement of the prey [@fraserfranco.etal2022]. The prey can increase their chances of survival by cooperating and moving fast to escape the predator [@cere.etal2021;@fraserfranco.etal2022;@santostefano.etal2024]. The game also elicits natural reactions in players such as freezing when predation is imminent (M.F.F., personal observations), corroborating virtual ecological studies showing that predation drives individual variation in risk perception [@beauchamp2020]. These observations outline how ecological phenomena can emerge from human interactions in virtual systems with fixed rules [@brosnan.etal2017;@kasumovic.etal2017]. Videogames also generate large volumes of data on thousands of interacting players throughout their lifetime in the game under realistic, controlled, and repeatable ecological scenarios. Hence, *Dead by Daylight* allows us to tackle fundamental questions about the role of antipredator behaviour and experience in predator-prey interactions.
 
-In this study, we assess how repeated encounters with prey shapes predator hunting success using data from players in *Dead by Daylight*. We quantify expertise acquisition as the relationship between hunting success (i.e. the probability of capturing all prey) and repeated experience (i.e. cumulated matches). First, we test the hypothesis that predator success will increase with experience up to some point at which it will stabilize [@dukas2019]. However, we hypothesize that prey skill and speed will influence predator expertise acquisition, and predict that faster and more skillful prey will reduce the gain in expertise at the population level. Prey with greater skills should move at faster speeds. Moreover, if prey skill and speed influence hunting success at the population level, then the acquisition of predator expertise should vary among individuals given these two prey features. Alternatively, if prey characteristics do not influence predator hunting success at the population level, we predict that the gain in predator expertise will be similar among individuals.
+In this study, we assess how repeated encounters with prey shapes predator hunting success using data from players in *Dead by Daylight*. We quantify expertise acquisition as the relationship between hunting success (i.e. the probability of capturing all prey) and repeated experience (i.e. cumulated matches). First, we test the hypothesis that predator success will increase with experience up to some point at which it will stabilize [@dukas2019]. However, we hypothesize that prey skill and speed will influence predator expertise acquisition by modulating the rate of gain in expertise at the population level. Second, we test the hypothesis that prey with more skill should have improved antipredator behaviour, and predict that prey with greater skills will move at faster speeds. Third, if prey skill and speed influence hunting success at the population level, then we expect that the acquisition of predator expertise will vary among individuals given these two prey features.
 
 
 
@@ -89,9 +89,9 @@ We used the mean rank of the prey as a proxy of their skill. The ranking system 
 
 ### Model specification
 
-We tested how predators developed their expertise by computing five Bayesian generalized additive mixed models (GAMM) with thin-plate regression splines, all of which estimated the relationship between hunting success and the predators' cumulative experience. We parametrized the models following the method of @pedersen.etal2019. For the first and second models (I and II), we assume that individual predators share a similar relationship between success and experience, but that this relationship can vary among them (e.g. predator 1 has a steeper curve than predator 2). This enabled us to test whether predators differed in the development of their expertise. Both models included a common global smoothing function (i.e., population effects) and random smooths for the predator ID (i.e., individual effects). Model I included the standardized match duration as a covariate, while model II included the standardized match duration and the average rank of the prey group, allowing us to test if the variation among predators in expertise acquisition was driven by prey skill. In the third model (III), we kept the individual smoothers for the predators, but removed the global smoother. This model assumes that predators do not share a common relationship between success and experience. In this model, we control for the standardized match duration and the average rank of the prey group. The fourth (IV) and fifth (V) models were expansions of the model III and model II respectively, where we included the standardized prey speed to assess its effect on the relationship between success and experience.
+We tested how predators developed their expertise by computing five Bayesian generalized additive mixed models (GAMM) with thin-plate regression splines, all of which estimated the relationship between hunting success and the predators' cumulative experience. We parametrized the models following the method of @pedersen.etal2019. For the first and second models (I and II), we assume that individual predators share a similar relationship between success and experience, but that this relationship can vary among them (e.g. predator 1 has a steeper curve than predator 2). This enabled us to test whether predators differed in the development of their expertise. Both models included a common global smoothing function (i.e., population effects) and random smooths for the predator ID (i.e., individual effects). Model I included the standardized match duration as a covariate, while model II included the standardized match duration and the average rank of the prey group, allowing us to test if the variation among predators in expertise acquisition was driven by prey skill. The third model had the same structure as model II but without a global smoother. This model assumes that predators do not share a common relationship between success and experience. In this model, we control for the standardized match duration and the average rank of the prey group. The fourth (IV) and fifth (V) models were expansions of model II, but included the standardized prey speed to assess its effect on the relationship between success and experience. Model IV does not have a standard global smoother, while mother V includes one.
 
-We computed the five models using a modified beta-binomial distribution. Hunting success was estimated as the number of prey consumed out of four, with probability of success drawn from a Beta distribution ($Beta(\mu_i, \phi)$) with mean ($\mu \in [0,1]$) and precision ($\phi > 0$) parameters. We used a logit link function to estimate $\mu_i$ where $\mu_i = \frac{exp(\eta_i)}{exp(\eta_i) + 1}$ and $\eta_i$ is the linear predictor. The precision parameter ($\phi$) was estimated using a log-link function. We used ten basis functions (K = 10) for the models to estimate the relationship between hunting success and experience. We assumed that the random intercepts for the predator ID ($id$) followed a Gaussian distribution with estimated standard deviation ($id \sim N(0,\ I\ \sigma_{id}^{2})$). We compared the predictive accuracy of all five models using approximate leave-one-out cross-validation with Pareto-smoothed importance sampling [@vehtari.etal2017;@piironen.vehtari2017;@vehtari.etal2022].
+We computed the five models using a modified beta-binomial distribution. Hunting success was estimated as the number of prey consumed out of four, with probability of success drawn from a Beta distribution ($Beta(\mu_i, \phi)$) with mean ($\mu \in [0,1]$) and precision ($\phi > 0$) parameters. We used a logit link function to estimate $\mu_i$ where $\mu_i = \frac{exp(\eta_i)}{exp(\eta_i) + 1}$ and $\eta_i$ is the linear predictor. The precision parameter ($\phi$) was estimated using a log link function. We used ten basis functions (K = 10) for the models to estimate the relationship between hunting success and experience. We assumed that the random intercepts for the predator ID ($id$) followed a Gaussian distribution with estimated standard deviation ($id \sim N(0,\ I\ \sigma_{id}^{2})$). We compared the predictive accuracy of all five models using approximate leave-one-out cross-validation with Pareto-smoothed importance sampling [@vehtari.etal2017;@piironen.vehtari2017;@vehtari.etal2022].
 
 We defined weakly informative Gaussian priors for the intercept ($N(0,\ 0.5^{2})$) and the global trend of cumulative experience ($N(0,\ 2^{2}))$). Following @fraserfranco.etal2022, we defined a positive Gaussian prior ($N(1,\ 0.5^{2}))$) for the slope of the game duration because longer trials lead to greater success, a Gaussian prior ($N(0,\ 1^{2}))$) for the slope of the prey rank, and a negative Gaussian prior on prey speed ($N(-1,\ 0.5^{2})$) because encountering faster prey is associated with lower success in this system [@fraserfranco.etal2022]. We defined a positive Gaussian prior on the precision parameter ($N(2,\ 0.5^{2})$). We employed weakly informative half-Gaussian priors on all the standard deviation parameters ($N(0,\ 0.5^{2})$).
 
@@ -99,9 +99,9 @@ To test the hypothesis that prey speed increases with prey skill, we fitted a Ba
 
 ### Parameter sampling settings
 
-We parametrized the GAMMs to run four chains of 1500 iterations each, sampling one parameter value every four iterations. We set the first 500 iterations of each model as warm-ups. Similarly, the linear model ran four chains of 1500 iterations each, sampling a parameter value at every iteration, and discarding the first 500 iterations. For GAMM model, we obtained 1000 posterior samples per parameter, and 4000 values for the linear model. We assessed the convergence of the chains using trace plots, R-hat diagnostics with a threshold of <1.01, and effective sample sizes (ESS) with a threshold of >100 [@vehtari.etal2021]. We also performed posterior predictive checks which showed an adequate fit of the models.
+We parametrized the GAMMs to run four chains of 1500 iterations each, sampling one parameter value every four iterations. We set the first 500 iterations of each model as warm-ups. Similarly, the linear model ran four chains of 1500 iterations each, sampling a parameter value at every iteration, and discarding the first 500 iterations. For GAMM model, we obtained 1000 posterior samples per parameter, and 4000 values for the linear model. We assessed the convergence of the chains using trace plots, R-hat diagnostics with a threshold set between 1.00 and 1.02, and effective sample sizes (ESS) with a threshold of >100 [@vehtari.etal2021]. We also performed posterior predictive checks which showed an adequate fit of the models.
 
-We fitted all models in R (version 4.1.2) using Hamiltonian Monte Carlo (HMC) sampling with the package "brms" version 2.22.0 [@burkner2017], an R front-end for the STAN software [@StanDevelopmentTeam2023], and "cmdstanr" version 0.8.0 [@gabry.cesnovar2021] as the back-end for parameter estimation (cmdstan installation version 2.35.0). For further details on how to reproduce the results, please consult the GitHub repository of this project (https://github.com/quantitative-ecologist/predator-expertise).
+We fitted all models in R (version 4.4.0) using Hamiltonian Monte Carlo (HMC) sampling with the package "brms" version 2.22.12 [@burkner2017], an R front-end for the STAN software [@StanDevelopmentTeam2023], and "cmdstanr" version 0.9.0 [@gabry.cesnovar2021] as the back-end for parameter estimation (cmdstan installation version 2.36.0). For further details on how to reproduce our results, please consult the GitHub repository (https://github.com/quantitative-ecologist/predator-expertise).
 
 ### Hypothesis testing
 
@@ -113,21 +113,24 @@ We tested the hypothesis that prey skill and antipredator behaviour impairs the 
 # RESULTS {.unnumbered}
 
 ```{r summary, cache = TRUE}
-# Import top 2 model fits
-fit1 <- readRDS(here::here("outputs", "outputs_models", "GAMM-II.rds"))
-fit2 <- readRDS(here::here("outputs", "outputs_models", "GAMM-V.rds"))
+# Import top 3 model fits
+fit1 <- readRDS(here::here("outputs", "outputs_models", "GAMM-I.rds"))
+fit2 <- readRDS(here::here("outputs", "outputs_models", "GAMM-II.rds"))
+fit5 <- readRDS(here::here("outputs", "outputs_models", "GAMM-V.rds"))
 
 sum1 <- summary(fit1, robust = TRUE)$splines
 sum2 <- summary(fit2, robust = TRUE)$splines
+sum5 <- summary(fit5, robust = TRUE)$splines
 
 # Clear memory
 rm(fit1)
 rm(fit2)
+rm(fit5)
 ```
 
 ## Acquisition of expertise at the population level
 
-Out of all five GAMM models, those that included a global smoother were better at predicting the data compared to those without a global smoother, indicating that predators shared a similar relationship between prey capture and experience (Table 1). Model V, which accounted for the prey group's rank and speed was the best at predicting the data (Table 1). 
+Among models that shared the same covariate structure (i.e., model II and III; model IV and V), those that included a global smoother generally performed better at predicting hunting success compared than those without one (Table 1). While we detected differences among predators in the form and shape of the relationship between success and experience (Figure 1), this suggests that there is a common underlying structure in this relationship across the population. Overall, model V, which included all prey features, was the best at predicting predator hunting success (Table 1).
 
 \newpage
 
@@ -143,17 +146,17 @@ loo_tab <- data.table(readRDS(file.path(path, "loo-cv-table_GAMM.rds")))
 
 # Add model column
 loo_tab[
-  , model := c(
+  , model1 := c(
     "(V) predator xp + ID smoothers + prey rank + prey speed",
     "(IV) ID smoothers + prey rank + prey speed",
-    "(III) ID smoothers + prey rank",
     "(II) predator xp + ID smoothers + prey rank",
-    "(I) predator xp + ID intercepts + prey rank"
+    "(III) ID smoothers + prey rank",
+    "(I) predator xp + ID smoothers"
   )
 ]
 
 # Reorder columns
-loo_tab <- loo_tab[, c(9, 1:8)]
+loo_tab <- loo_tab[, c(10, 2:9)]
 
 # ===========================================================================
 # ===========================================================================
@@ -171,7 +174,7 @@ loo_tab <- loo_tab[, c(9, 1:8)]
 # Custom header
 my_header <- data.frame(
   col_keys = c(
-    "model",
+    "model1",
     "elpd_diff",
     "se_diff",
     "elpd_loo",
@@ -206,7 +209,7 @@ my_theme <- function(x, ...) {
 # Create the table ----------------------------------------------------------
 
 tab1 <- loo_tab %>%
-  select(model, elpd_diff, se_diff, elpd_loo, se_elpd_loo) %>%
+  select(model1, elpd_diff, se_diff, elpd_loo, se_elpd_loo) %>%
   flextable(col_keys = my_header$col_keys) %>%
   set_header_df(mapping = my_header, key = "col_keys") %>%
   my_theme() %>%
@@ -228,7 +231,7 @@ tab1 <- loo_tab %>%
 
   # Table caption
   set_caption(
-    caption = "Table 1. Leave-one-out cross-validation table of the five GAMMs relating hunting success to predator experience.",
+    caption = "Table 1. Leave-one-out cross-validation results comparing the predictive performance of the five GAMMs estimating the relationship between hunting success and predator experience. All models reported include the game duration as a control. Only differences in smoothing functions and prey covariates are reported.",
     style = "Table Caption"
   ) %>%
 
@@ -242,9 +245,11 @@ tab1
 # ===========================================================================
 ```
 
-Models in which prey rank was not accounted for resulted in no change in hunting success with experience for the average individual (i.e. no gain in expertise, Figure 1A). As we predicted, accounting for the prey rank resulted in a diminishing returns curve (model II), with predators optimizing their success after playing ~400 matches (Figure 1B). The predictions indicate a 40% increase in the probability of consuming all prey for the average individual between the first and the ~400$^{th}$ match, where success reached a plateau (Figure 1B). Controling for prey speed did not influence the results at the population level (Figure 1C). Yet, we found strong evidence of a negative relationship between hunting success and prey speed, indicating that hunting faster prey reduced the predator's chances of capture (Figure S2). Moreover, prey with more expertise moved at higher speeds compared to less skilled prey (Figure 2).
+Models in which we did not account for the prey rank resulted in almost no change in hunting success with experience for the average individual (i.e. no gain in expertise, Figure 1A). As we expected, accounting for the prey rank (model II) influenced the form of the relationship, resulting in a diminishing returns curve with predators optimizing their success after playing ~450 matches (Figure 1B). The predictions indicate that the population would improve their hunting success by ~40% from the first to the ~450$^{th}$ match by hunting prey with average skill (Figure 1B). 
 
-```{r fig1, out.width = "100%", fig.cap = "**Figure 1**. Median posterior predictions of the acquisition of predator hunting expertise. The predators' hunting success (i.e. the probability of consuming the four prey) is on the y-axis, and the predators' cumulative experience (i.e. the number of matches played before each observation) is on the x-axis. Panels A and C show the acquisition of expertise for the average individual with the vertical dashed lines on the left representing the lowest predicted values. For panel A, the right-side vertical dashed line shows the highest predicted success. For panel C, the right-side dashed line represents the point on the curve where success was optimized, which we calculated using the finite differences method to obtain the first derivative of the predicted values. Panels B and D show among individual differences in the acquisition of expertise, with each curve representing an individual predator. (A-B) model II where we control for the prey rank (C-D) model V where we control for the prey rank and the speed of the prey group."}
+Controlling for prey speed did not alter the form of the relationship between success and experience at the population level. However, as predicted, the rate of expertise acquisition shifted slightly: the predator population optimized its hunting success earlier, shortly after 300 matches (Figure 1C). We also found strong evidence of a negative relationship between hunting success and prey speed, indicating that hunting faster prey reduced the predator's chances of capture (Figure S2). Moreover, prey groups composed of individuals with greater skill moved faster than those composed of individuals with lower skill (Figure 2).
+
+```{r fig1, out.width = "100%", fig.cap = "**Figure 1**. Median posterior predictions of the acquisition of predator hunting expertise. The predators' hunting success (i.e. the probability of consuming the four prey) is on the y-axis, and the predators' cumulative experience (i.e. the number of matches played before each observation) is on the x-axis. Panels A to C show the acquisition of expertise for the average individual with the vertical dashed lines on the left representing the lowest predicted values. For panel A, the right-side vertical dashed line shows the highest predicted success. For panels B and C, the right-side dashed line represents the point on the curve where success was optimized, which we calculated using the finite differences method to obtain the first derivative of the predicted values. Panels D to F show among individual differences in the acquisition of expertise, with each curve representing an individual predator. (A-D) Model I where we control for the game duration exclusively. (B-E) Model II where we control for the game duration and the prey rank exclusively. (C-F) Model V where we control for game duration as well as the rank and speed of the prey group."}
 
 knitr::include_graphics(
   here::here("outputs", "outputs_figures", "figure1.png")
@@ -253,7 +258,7 @@ knitr::include_graphics(
 
 ## Acquisition of expertise at the individual level
 
-Prey speed did not influence among-individual differences in average hunting success as the posterior distributions of the standard deviations of individual intercepts were almost completely overlapping (Figure 3, median = `r toString(round(sum1[2,]$Estimate, digits = 2))` vs median = `r toString(round(sum2[2,]$Estimate, digits = 2))`). However, individuals differed in the acquisition of their hunting expertise (Figure 1B-D). We found strong evidence that the speed of the prey mediated among-individual differences in the linear relationship between success and experience, as there were substantial differences in the standard deviations of the individual slopes between the two models (Figure 3, median = `r toString(round(sum1[3,]$Estimate, digits = 2))` vs median = `r toString(round(sum2[3,]$Estimate, digits = 2))`). Differences among individuals in the direction of the linear relationship between success and experience were `r toString(round(sum1[3,]$Estimate / sum2[3,]$Estimate, digits = 2))` times lower when we removed the effect of prey speed (i.e. accounting for it in the model).
+Our results show that individual predators varied in their acquisition of expertise, regardless of whether we controlled for prey features (Figure 1 D-F and Figure 3). However, the extent of the variation in the relationship between success and experience was shaped by the prey's skill, as shown by the the posterior distributions of individual-level parameters in the model accounting for the rank of the prey (model II, Figure 2). Specifically, the standard deviations of individual intercepts (median model I = `r toString(round(sum1[2,]$Estimate, digits = 2))` vs median model II = `r toString(round(sum2[2,]$Estimate, digits = 2))`), slopes (median model I = `r toString(round(sum1[3,]$Estimate, digits = 2))` vs median model II = `r toString(round(sum2[3,]$Estimate, digits = 2))`), and wiggliness (median model I = `r toString(round(sum1[4,]$Estimate, digits = 2))` vs median model II = `r toString(round(sum2[4,]$Estimate, digits = 2))`) were all larger in model II than in model I. These results indicate that if predators hunted prey with average skill levels, differences among individual predators in expertise acquisition would be greater.
 
 ```{r fig2, out.width = "100%", fig.cap = "**Figure 2**. Median posterior predictions of the relationship between prey speed and prey skill. The average speed of the prey group is on the y-axis, and the average rank of the prey group is on the x-axis. The colour gradient showcases the density of observations, with lighter colours indicating lower densities, and darker colours indicating higher densities of observations. Lower rank values indicate that the prey group is more skilled, while higher values indicate that the prey are less skilled"}
 
@@ -262,9 +267,9 @@ knitr::include_graphics(
 )
 ```
 
-We also found strong evidence that the speed of the prey mediated the form of the relationship between hunting success and experience at the individual level. We detected large differences in the standard deviations of the wiggliness (Figure 2, median = `r toString(round(sum1[4,]$Estimate, digits = 2))` vs median = `r toString(round(sum2[4,]$Estimate, digits = 2))`). The lower standard deviation for the model where we accounted for prey speed (model V) suggests that the form of the relationship between success and experience was more similar among individuals.
+Prey speed did not influence among-individual differences in average hunting success (median model II = `r toString(round(sum2[2,]$Estimate, digits = 2))` vs median model V = `r toString(round(sum5[2,]$Estimate, digits = 2))`), nor in expertise acquisition (median model II = `r toString(round(sum2[3,]$Estimate, digits = 2))` vs median model V = `r toString(round(sum5[3,]$Estimate, digits = 2))`), as the posterior distributions of the standard deviations were almost completely overlapping (Figure 3). 
 
-```{r fig3, out.width = "100%", fig.cap = "**Figure 3**. Posterior distributions of the standard deviation of individual-level parameters estimated by the GAMM. The parameters are displayed on the y axis, and their standard deviation are displayed on the x axis. The intercept and slope standard deviations refer to the linear components of the estimated relationship between hunting success and cumulative experience. The standard deviation of the wiggliness parameter refers to the shape of the curves (i.e. nonlinear component). The vertical lines are the medians of the posterior distributions. For each panel, the light-coloured distributions (i.e. green) are for the model with a shared trend where we did not account for prey speed (model II), and the darker-coloured distributions (i.e. purple) are for the model with a shared trend where we accounted for prey speed (model IV)."}
+```{r fig3, out.width = "100%", fig.cap = "**Figure 3**. Posterior distributions of the standard deviation of individual-level parameters estimated by the GAMM. The parameters are displayed on the y axis, and their standard deviation are displayed on the x axis. The intercept and slope standard deviations refer to the linear components of the estimated relationship between hunting success and cumulative experience. The standard deviation of the wiggliness parameter refers to the shape of the curves (i.e. nonlinear component). The vertical lines are the medians of the posterior distributions. The yellow distributions are for the model accounting only for the game duration (model I), the purple distributions are for the model accounting for game duration and the prey rank (model II), and the green distributions are for the model accounting for the game duration, prey rank, and prey speed (model V)."}
 
 knitr::include_graphics(
   here::here("outputs", "outputs_figures", "figure3.png")
