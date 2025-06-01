@@ -334,9 +334,6 @@ predicted_values <- tab2_b$estimate__
 # Define the x-axis range
 x <- tab2_b$Zcumul_xp
 
-# Fit a spline to the predicted values
-spline_fit <- splinefun(x, predicted_values)
-
 # Calculate the first derivative using finite differences
 dx <- mean(diff(x))
 derivatives <- diff(predicted_values) / dx
@@ -412,9 +409,6 @@ predicted_values <- tab5_b$estimate__
 
 # Define the x-axis range
 x <- tab5_b$Zcumul_xp
-
-# Fit a spline to the predicted values
-spline_fit <- splinefun(x, predicted_values)
 
 # Calculate the first derivative using finite differences
 dx <- mean(diff(x))
