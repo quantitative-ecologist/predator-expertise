@@ -119,8 +119,9 @@ tab5_b <- data.table(tab5_b[[1]])
 # Transform values --------------------------------------------------------
 
 # Back transform x-axis values
-sequence <- (seq(0, 500, 100) - mean(data$cumul_xp_pred))
+mean_xp <- mean(data$cumul_xp_pred)
 standev <- sd(data$cumul_xp_pred)
+sequence <- (seq(0, 500, 100) - mean_xp)
 scaled_breaks <- sequence / standev
 
 # List the tables
@@ -329,20 +330,21 @@ plot1_b <- ggplot(
 # Model 2 rank only --------------------------------------------------------
 
 # Predicted values from the GAMM
-predicted_values <- tab2_b$estimate__
+predicted_values2 <- tab2_b$estimate__
 
 # Define the x-axis range
-x <- tab2_b$Zcumul_xp
+x2 <- tab2_b$Zcumul_xp
 
 # Calculate the first derivative using finite differences
-dx <- mean(diff(x))
-derivatives <- diff(predicted_values) / dx
+dx2 <- mean(diff(x))
+derivatives2 <- diff(predicted_values2) / dx2
 
 # Establish the treshold at a value very close to 0 since its optimization
 threshold <- 0.0088
 # Find the point where the slope is close to zero
-stabilized_point <- x[which(abs(derivatives) <= threshold)][1]
+stabilized_point2 <- x2[which(abs(derivatives2) <= threshold)][1]
 
+(stabilized_point2 * standev) + mean_xp
 
 plot2_b <- ggplot(
   tab2_b,
@@ -362,7 +364,7 @@ plot2_b <- ggplot(
     size = 5
   ) +
   geom_vline(
-    xintercept = tab2_b[Zcumul_xp == stabilized_point]$Zcumul_xp,
+    xintercept = tab2_b[Zcumul_xp == stabilized_point2]$Zcumul_xp,
     lty = "dashed",
     color = "#440154"
   ) +
@@ -370,12 +372,12 @@ plot2_b <- ggplot(
     aes(label = paste(
       "y =",
       format(
-        round(tab2_b[Zcumul_xp == stabilized_point]$estimate__ / 4, digits = 2),
+        round(tab2_b[Zcumul_xp == stabilized_point2]$estimate__ / 4, digits = 2),
         nsmall = 2
       )
     ),
-    y = (tab2_b[Zcumul_xp == stabilized_point]$estimate__ / 4) + 0.10,
-    x = tab2_b[Zcumul_xp == stabilized_point]$Zcumul_xp - 0.55),
+    y = (tab2_b[Zcumul_xp == stabilized_point2]$estimate__ / 4) + 0.10,
+    x = tab2_b[Zcumul_xp == stabilized_point2]$Zcumul_xp - 0.55),
     color = "#440154",
     size = 5
   ) +
@@ -405,19 +407,21 @@ plot2_b <- ggplot(
 # Model 5 rank + speed -----------------------------------------------------
 
 # Predicted values from the GAMM
-predicted_values <- tab5_b$estimate__
+predicted_values5 <- tab5_b$estimate__
 
 # Define the x-axis range
-x <- tab5_b$Zcumul_xp
+x5 <- tab5_b$Zcumul_xp
 
 # Calculate the first derivative using finite differences
-dx <- mean(diff(x))
-derivatives <- diff(predicted_values) / dx
+dx5 <- mean(diff(x5))
+derivatives5 <- diff(predicted_values5) / dx5
 
 # Establish the treshold at a value very close to 0 since its optimization
 threshold <- 0.0088
 # Find the point where the slope is close to zero
-stabilized_point <- x[which(abs(derivatives) <= threshold)][1]
+stabilized_point5 <- x5[which(abs(derivatives5) <= threshold)][1]
+
+(stabilized_point5 * standev) + mean_xp
 
 plot5_b <- ggplot(
   tab5_b,
@@ -437,7 +441,7 @@ plot5_b <- ggplot(
     size = 5
   ) +
   geom_vline(
-    xintercept = tab5_b[Zcumul_xp == stabilized_point]$Zcumul_xp,
+    xintercept = tab5_b[Zcumul_xp == stabilized_point5]$Zcumul_xp,
     lty = "dashed",
     color = "#440154"
   ) +
@@ -445,12 +449,12 @@ plot5_b <- ggplot(
     aes(label = paste(
       "y =",
       format(
-        round(tab5_b[Zcumul_xp == stabilized_point]$estimate__ / 4, digits = 2),
+        round(tab5_b[Zcumul_xp == stabilized_point5]$estimate__ / 4, digits = 2),
         nsmall = 2
       )
     ),
-    y = (tab5_b[Zcumul_xp == stabilized_point]$estimate__ / 4) + 0.10,
-    x = tab5_b[Zcumul_xp == stabilized_point]$Zcumul_xp - 0.55),
+    y = (tab5_b[Zcumul_xp == stabilized_point5]$estimate__ / 4) + 0.10,
+    x = tab5_b[Zcumul_xp == stabilized_point5]$Zcumul_xp - 0.55),
     color = "#440154",
     size = 5
   ) +
