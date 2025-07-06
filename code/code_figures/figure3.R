@@ -188,7 +188,7 @@ p <- ggplot(
   aes(x = value, y = parameter, fill = model)
 )
 
-fig2 <- p + geom_density_ridges(
+fig3 <- p + geom_density_ridges(
   scale=0.75, alpha = 0.5,
   quantile_lines = TRUE,
   quantiles = 2,
