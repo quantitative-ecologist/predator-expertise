@@ -336,7 +336,7 @@ predicted_values2 <- tab2_b$estimate__
 x2 <- tab2_b$Zcumul_xp
 
 # Calculate the first derivative using finite differences
-dx2 <- mean(diff(x))
+dx2 <- mean(diff(x2))
 derivatives2 <- diff(predicted_values2) / dx2
 
 # Establish the treshold at a value very close to 0 since its optimization
