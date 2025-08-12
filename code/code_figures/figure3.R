@@ -28,6 +28,7 @@ path <- file.path(getwd(), "outputs", "outputs_models")
 fit1 <- readRDS(file.path(path, "GAMM-I.rds"))
 fit2 <- readRDS(file.path(path, "GAMM-II.rds"))
 fit5 <- readRDS(file.path(path, "GAMM-V.rds"))
+fit7 <- readRDS(file.path(path, "GAMM-VII.rds"))
 
 # ==========================================================================
 # ==========================================================================
@@ -53,7 +54,7 @@ post1 <- data.table(
 )
 
 
-# Extract posterior draws fit1
+# Extract posterior draws fit
 post2 <- data.table(
   as_draws_df(
     fit2,
@@ -65,10 +66,23 @@ post2 <- data.table(
   )
 )
 
-# Extract posterior draws fit2
+
+# Extract posterior draws fit1
 post5 <- data.table(
   as_draws_df(
     fit5,
+    variable = c(
+      "sds_sZcumul_xppredator_id_1",
+      "sds_sZcumul_xppredator_id_2",
+      "sds_sZcumul_xppredator_id_3"
+    )
+  )
+)
+
+# Extract posterior draws fit2
+post7 <- data.table(
+  as_draws_df(
+    fit7,
     variable = c(
       "sds_sZcumul_xppredator_id_1",
       "sds_sZcumul_xppredator_id_2",
@@ -81,16 +95,18 @@ post5 <- data.table(
 rm(fit1)
 rm(fit2)
 rm(fit5)
+rm(fit7)
 
 # Combine posterior draws
 figdat <- rbind(
   post1,
   post2,
-  post5
+  post5,
+  post7
 )
 
 # Add model variable
-figdat[, model := c(rep("fit1", 4000), rep("fit2", 4000), rep("fit5", 4000))]
+figdat[, model := c(rep("fit1", 4000), rep("fit2", 4000), rep("fit5", 4000), rep("fit7", 4000))]
 
 # ==========================================================================
 # ==========================================================================
@@ -196,8 +212,8 @@ fig3 <- p + geom_density_ridges(
   ) +
   scale_x_continuous(breaks = seq(0, 10, 2), limits = c(0, 11)) +
   scale_fill_manual(
-    values = c("#fde725", "#482173FF", "#51C56AFF"),
-    labels = c("Model I", "Model II", "Model V")
+    values = c("#f6d746", "#e55c30", "#781c6d", "#140b34"),
+    labels = c("Model I", "Model II", "Model V", "Model VII")
   ) +
   labs(fill = " ") +
   ylab("") +
@@ -209,11 +225,11 @@ fig3 <- p + geom_density_ridges(
 
 # Save plot ----------------------------------------------------------------
 
-path <- file.path(getwd(), "outputs", "outputs_figures")
+fig_path <- file.path(getwd(), "outputs", "outputs_figures")
 
 ggsave(
   fig3,
-  filename = file.path(path, "figure3.png"),
+  filename = file.path(fig_path, "figure3.png"),
   width = 8.5,
   height = 7.5
 )
