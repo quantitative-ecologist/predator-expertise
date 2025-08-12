@@ -28,7 +28,7 @@ path <- file.path(getwd(), "outputs", "outputs_models")
 fit1 <- readRDS(file.path(path, "GAMM-I.rds"))
 fit2 <- readRDS(file.path(path, "GAMM-II.rds"))
 fit5 <- readRDS(file.path(path, "GAMM-V.rds"))
-fit7 <- readRDS(file.path(path, "GAMM-VII.rds"))
+fit6 <- readRDS(file.path(path, "GAMM-VI.rds"))
 
 # ==========================================================================
 # ==========================================================================
@@ -80,7 +80,7 @@ post5 <- data.table(
 )
 
 # Extract posterior draws fit2
-post7 <- data.table(
+post6 <- data.table(
   as_draws_df(
     fit7,
     variable = c(
@@ -95,18 +95,18 @@ post7 <- data.table(
 rm(fit1)
 rm(fit2)
 rm(fit5)
-rm(fit7)
+rm(fit6)
 
 # Combine posterior draws
 figdat <- rbind(
   post1,
   post2,
   post5,
-  post7
+  post6
 )
 
 # Add model variable
-figdat[, model := c(rep("fit1", 4000), rep("fit2", 4000), rep("fit5", 4000), rep("fit7", 4000))]
+figdat[, model := c(rep("fit1", 4000), rep("fit2", 4000), rep("fit5", 4000), rep("fit6", 4000))]
 
 # ==========================================================================
 # ==========================================================================
@@ -213,7 +213,7 @@ fig3 <- p + geom_density_ridges(
   scale_x_continuous(breaks = seq(0, 10, 2), limits = c(0, 11)) +
   scale_fill_manual(
     values = c("#f6d746", "#e55c30", "#781c6d", "#140b34"),
-    labels = c("Model I", "Model II", "Model V", "Model VII")
+    labels = c("Model I", "Model II", "Model V", "Model VI")
   ) +
   labs(fill = " ") +
   ylab("") +
