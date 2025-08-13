@@ -32,6 +32,7 @@ if (!dir.exists(output_path)) dir.create(output_path, recursive = TRUE)
 # Define expected model files
 model_files <- list(
   LM_PreySpeed = "LM-PreySpeed.rds",
+  LM_PreySpace = "LM-PreySpace.rds",
   GAMM_I = "GAMM-I.rds",
   GAMM_II = "GAMM-II.rds",
   GAMM_III = "GAMM-III.rds",
