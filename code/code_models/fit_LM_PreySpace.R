@@ -99,7 +99,7 @@ priors <- c(
   ),
   # prior on the intercept
   set_prior(
-    "normal(2, 0.5)",
+    "normal(15, 0.5)",
     class = "Intercept"
   ),
   # prior on sd parameters
