@@ -225,6 +225,7 @@ p2 <- ggplot() +
   custom_theme# +theme(plot.margin = margin(5, 5, 5, 20))
 
 
+
 # Prepare figure ------------------------------------------------------------
 
 # Arrange paneled figure

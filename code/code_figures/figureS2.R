@@ -4,7 +4,7 @@
 
 # ==========================================================================
 
-# Figure of the relationship between prey speed and predator XP
+# Figure of the relationship between success and prey speed and space
 
 
 
@@ -18,6 +18,7 @@
 library(data.table)
 library(brms)
 library(ggplot2)
+library(ggpubr)
 library(viridis)
 
 
@@ -25,18 +26,19 @@ library(viridis)
 # Import model -------------------------------------------------------------
 
 path <- file.path(getwd(), "outputs", "outputs_models")
-fit <- readRDS(file.path(path, "GAMM-V.rds"))
+fit <- readRDS(file.path(path, "GAMM-VI.rds"))
 
 
 
 # Load the data ------------------------------------------------------------
 
 data <- fread(
-  "./data/FraserFrancoetal2023-data.csv",
+  "./data/FraserFrancoetal2025-data.csv",
   select = c("predator_id",
              "game_duration",
              "pred_speed",
              "prey_avg_speed",
+             "prey_avg_amount_tiles_visited",
              "prey_avg_rank",
              "cumul_xp_pred",
              "total_xp_pred",
@@ -55,49 +57,21 @@ data[, predator_id := as.factor(predator_id)]
 # 2. Compute the predictions
 # ==========================================================================
 
-# Post processing preparations for custom family ---------------------------
-
-expose_functions(fit, vectorize = TRUE)
-
-# Define the log likelihood function
-log_lik_beta_binomial2 <- function(i, prep) {
-  mu <- brms::get_dpar(prep, "mu", i = i)
-  phi <- brms::get_dpar(prep, "phi", i = i)
-  trials <- prep$data$vint1[i]
-  y <- prep$data$Y[i]
-  beta_binomial2_lpmf(y, mu, phi, trials)
-}
-
-# Define function for posterior_predict
-posterior_predict_beta_binomial2 <- function(i, prep, ...) {
-  mu <- brms::get_dpar(prep, "mu", i = i)
-  phi <- brms::get_dpar(prep, "phi", i = i)
-  trials <- prep$data$vint1[i]
-  beta_binomial2_rng(mu, phi, trials)
-}
-
-# Define function for posterior_epred
-posterior_epred_beta_binomial2 <- function(prep) {
-  mu <- brms::get_dpar(prep, "mu")
-  trials <- prep$data$vint1
-  trials <- matrix(trials, nrow = nrow(mu), ncol = ncol(mu), byrow = TRUE)
-  mu * trials
-}
-
-
 
 # Predictions --------------------------------------------------------------
 
 preds <- conditional_effects(
   x = fit,
   method = "fitted",
-  effects = "Zprey_speed",
+  #effects = "Zprey_speed",
+  effects = c("Zprey_speed", "Zprey_space"),
   prob = 0.89,
   robust = TRUE,
   re_formula = NULL,
   conditions = data.frame(predator_id = NA)
 )
-preds_t <- data.table(preds[[1]])
+preds_speed <- data.table(preds[[1]])
+preds_space <- data.table(preds[[2]])
 
 
 
@@ -109,18 +83,34 @@ range_speed <- seq(
   max(data$prey_avg_speed, na.rm = TRUE),
   length.out = 5
 )
-sequence <- range_speed - mean(data$prey_avg_speed, na.rm = TRUE)
-standev <- sd(data$prey_avg_speed, na.rm = TRUE)
-scaled_breaks <- sequence / standev
+range_space <- seq(
+  min(data$prey_avg_amount_tiles_visited, na.rm = TRUE),
+  max(data$prey_avg_amount_tiles_visited, na.rm = TRUE),
+  length.out = 5
+)
+
+speed_sequence <- range_speed - mean(data$prey_avg_speed, na.rm = TRUE)
+space_sequence <- range_space - mean(data$prey_avg_amount_tiles_visited, na.rm = TRUE)
+
+speed_standev <- sd(data$prey_avg_speed, na.rm = TRUE)
+space_standev <- sd(data$prey_avg_amount_tiles_visited, na.rm = TRUE)
+
+speed_scaled_breaks <- speed_sequence / speed_standev
+space_scaled_breaks <- space_sequence / space_standev
 
 # Function to apply transformation
 # Computes non standardized cumulative XP
-func <- function(x) {
-  x[, prey_avg_speed := (Zprey_speed * standev) + mean(data$prey_avg_speed, na.rm = TRUE)]
+speed_func <- function(x) {
+  x[, prey_avg_speed := (Zprey_speed * speed_standev) + mean(data$prey_avg_speed, na.rm = TRUE)]
+}
+
+space_func <- function(x) {
+  x[, prey_avg_amount_tiles_visited := (Zprey_space * space_standev) + mean(data$prey_avg_amount_tiles_visited, na.rm = TRUE)]
 }
 
 # Apply function
-func(preds_t)
+speed_func(preds_speed)
+space_func(preds_space)
 
 # ==========================================================================
 # ==========================================================================
@@ -133,11 +123,12 @@ func(preds_t)
 # 4. Plot the posterior distributions
 # ==========================================================================
 
-# Prepare figure -----------------------------------------------------------
+
+# Figure theme -------------------------------------------------------------
 
 custom_theme <- theme(
   # Title
-  plot.title = element_text(size = 8),
+  plot.title = element_text(size = 12),
   # axis values size
   axis.text = element_text(face = "plain",
                            size = 14,
@@ -158,8 +149,12 @@ custom_theme <- theme(
   panel.background = element_blank()
 )
 
-p <- ggplot(
-  preds_t,
+
+
+# Compute plots ------------------------------------------------------------
+
+p1 <- ggplot(
+  preds_speed,
   aes(x = prey_avg_speed,
       y = estimate__ / 4)
 ) +
@@ -172,31 +167,69 @@ p <- ggplot(
   ) +
   geom_line(linewidth = 1) +
   ylab("Hunting success\n") +
-  ggtitle("Model V: game duration + prey rank + prey speed") +
+  ggtitle("Model VI: rank + speed + space") +
   scale_y_continuous(
     breaks = seq(0, 1, 0.25),
     limits = c(0, 1)
   ) +
   scale_x_continuous(
     breaks = seq(0, 4, 1),
-    limits = c(0.5, 4)
+    limits = c(0, 4)
   ) +
   xlab("\nPrey speed (m/s)") +
   custom_theme
 
 
+p2 <- ggplot(
+  preds_space,
+  aes(x = prey_avg_amount_tiles_visited,
+      y = estimate__ / 4)
+) +
+  geom_ribbon(
+    aes(
+      ymin = lower__ / 4,
+      ymax = upper__ / 4
+    ),
+    fill = "gray"
+  ) +
+  geom_line(linewidth = 1) +
+  ylab("Hunting success\n") +
+  ggtitle("Model VI: rank + speed + space") +
+  scale_y_continuous(
+    breaks = seq(0, 1, 0.25),
+    limits = c(0, 1)
+  ) +
+  # scale_x_continuous(
+  #   breaks = seq(0, 4, 1),
+  #   limits = c(0.5, 4)
+  # ) +
+  xlab("\nPrey space covered") +
+  custom_theme
 
-# Export the figure --------------------------------------------------------
+
+
+# Prepare figure ------------------------------------------------------------
+
+figure <- ggarrange(
+  NULL, p1, NULL, p2,
+  ncol = 4, nrow = 1,
+  labels = c("(A)", "", "(B)", ""),
+  widths = c(0.15, 1.5, 0.15, 1.5)
+)
+
+
+
+# Export the figure -----------------------------------------------------
 
 path <- file.path(getwd(), "outputs", "outputs_figures")
 
 ggsave(
-  p,
+  figure,
   filename = file.path(path, "figureS2.png"),
   units = "in",
   dpi = 300,
-  width = 5,
-  height = 5
+  width = 10,
+  height = 4
 )
 
 # ==========================================================================
