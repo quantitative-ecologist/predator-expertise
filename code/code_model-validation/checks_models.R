@@ -37,7 +37,8 @@ model_files <- list(
   GAMM_II = "GAMM-II.rds",
   GAMM_III = "GAMM-III.rds",
   GAMM_IV = "GAMM-IV.rds",
-  GAMM_V = "GAMM-V.rds"
+  GAMM_V = "GAMM-V.rds",
+  GAMM_VI = "GAMM-VI.rds"
 )
 
 if (!mod %in% names(model_files)) {

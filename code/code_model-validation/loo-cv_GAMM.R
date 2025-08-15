@@ -34,7 +34,8 @@ model_files <- list(
   "GAMM-II"  = "GAMM-II.rds",
   "GAMM-III" = "GAMM-III.rds",
   "GAMM-IV"  = "GAMM-IV.rds",
-  "GAMM-V"  = "GAMM-V.rds"
+  "GAMM-V"   = "GAMM-V.rds",
+  "GAMM-VI"  = "GAMM-VI.rds"
 )
 
 # Check model name

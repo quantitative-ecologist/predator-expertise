@@ -10,7 +10,7 @@ library(brms)
 
 # Define path and file names
 output_path <- file.path(getwd(), "outputs", "outputs_model-validation")
-model_names <- c("GAMM-I", "GAMM-II", "GAMM-III", "GAMM-IV", "GAMM-V")
+model_names <- c("GAMM-I", "GAMM-II", "GAMM-III", "GAMM-IV", "GAMM-V", "GAMM-VI")
 
 # Import loo-cv model output files
 loo_results <- lapply(
