@@ -1,8 +1,10 @@
 # ==========================================================================
 
-#                 Plot GAMM model without rank - Figure S3
+#                               Figure S3
 
 # ==========================================================================
+
+# Figure of the relationship between success and prey speed and space
 
 
 
@@ -11,21 +13,20 @@
 # ==========================================================================
 
 
+# Load libraries -----------------------------------------------------------
 
-# Load libraries and model -------------------------------------------------
-
-options(mc.cores = parallel::detectCores())
-
-library(parallel)
-library(brms)
 library(data.table)
+library(brms)
 library(ggplot2)
 library(ggpubr)
 library(viridis)
 
-path <- file.path(getwd(), "outputs", "outputs_models")
 
-mod <- readRDS(file.path(path, "GAMM-I.rds"))
+
+# Import model -------------------------------------------------------------
+
+path <- file.path(getwd(), "outputs", "outputs_models")
+fit <- readRDS(file.path(path, "GAMM-VI.rds"))
 
 
 
@@ -45,7 +46,6 @@ data <- fread(
 )
 
 data[, predator_id := as.factor(predator_id)]
-
 # ==========================================================================
 # ==========================================================================
 
@@ -54,75 +54,79 @@ data[, predator_id := as.factor(predator_id)]
 
 
 # ==========================================================================
-# 2. Prepare the data for the plots
+# 2. Compute the predictions
 # ==========================================================================
 
 
+# Predictions --------------------------------------------------------------
 
-# Prepare the plots --------------------------------------------------------
-
-
-# Group-level smooths model 2
-tab_a <- conditional_effects(
-  mod, method = "fitted",
-  effects = "Zcumul_xp:predator_id",
-  robust = TRUE, re_formula = NULL
-)
-tab_a <- data.table(tab_a[[1]])
-
-# Cumulative XP global trend model 2
-tab_b <- conditional_effects(
-  mod, method = "fitted",
-  robust = TRUE, re_formula = NULL,
-  effects = "Zcumul_xp",
+preds <- conditional_effects(
+  x = fit,
+  method = "fitted",
+  effects = c("Zprey_speed", "Zprey_space"),
+  prob = 0.89,
+  robust = TRUE,
+  re_formula = NULL,
   conditions = data.frame(predator_id = NA)
 )
-tab_b <- data.table(tab_b[[1]])
+preds_speed <- data.table(preds[[1]])
+preds_space <- data.table(preds[[2]])
+
 
 
 # Transform values --------------------------------------------------------
 
 # Back transform x-axis values
-mean_xp <- mean(data$cumul_xp_pred)
-standev <- sd(data$cumul_xp_pred)
-sequence <- (seq(0, 500, 100) - mean_xp)
-scaled_breaks <- sequence / standev
+range_speed <- seq(
+  min(data$prey_avg_speed, na.rm = TRUE),
+  max(data$prey_avg_speed, na.rm = TRUE),
+  length.out = 5
+)
+range_space <- seq(
+  min(data$prey_avg_amount_tiles_visited, na.rm = TRUE),
+  max(data$prey_avg_amount_tiles_visited, na.rm = TRUE),
+  length.out = 5
+)
 
-# List the tables
-tables <- list(
-  tab_a, tab_b
-)
-names(tables) <- c(
-  "tab_a", "tab_b"
-)
+speed_sequence <- range_speed - mean(data$prey_avg_speed, na.rm = TRUE)
+space_sequence <- range_space - mean(data$prey_avg_amount_tiles_visited, na.rm = TRUE)
+
+speed_standev <- sd(data$prey_avg_speed, na.rm = TRUE)
+space_standev <- sd(data$prey_avg_amount_tiles_visited, na.rm = TRUE)
+
+speed_scaled_breaks <- speed_sequence / speed_standev
+space_scaled_breaks <- space_sequence / space_standev
 
 # Function to apply transformation
 # Computes non standardized cumulative XP
-func <- function(x) {
-  x[, cumul_xp := (Zcumul_xp * standev) + mean(data$cumul_xp_pred)]
+speed_func <- function(x) {
+  x[, prey_avg_speed := (Zprey_speed * speed_standev) + mean(data$prey_avg_speed, na.rm = TRUE)]
+}
+
+space_func <- function(x) {
+  x[, prey_avg_amount_tiles_visited := (Zprey_space * space_standev) + mean(data$prey_avg_amount_tiles_visited, na.rm = TRUE)]
 }
 
 # Apply function
-lapply(tables, func)
+speed_func(preds_speed)
+space_func(preds_space)
+
+# ==========================================================================
+# ==========================================================================
 
 
 
-# Cut fitted values based on player XP ------------------------------------
-
-# Extract player IDs with their total XP from the original data
-xp <- unique(data[, .(predator_id, total_xp_pred)])
-
-# Merge the two tables adding the total XP
-tab_a <- merge(tab_a, xp, by = "predator_id")
-
-# Cut all matches where fitted values are above total XP
-tab_a <- tab_a[cumul_xp <= total_xp_pred, ]
 
 
-# Setup a custom theme for the plot ----------------------------------------
+# ==========================================================================
+# 4. Plot the posterior distributions
+# ==========================================================================
+
+
+# Figure theme -------------------------------------------------------------
 
 custom_theme <- theme(
-  # Plot title
+  # Title
   plot.title = element_text(size = 12),
   # axis values size
   axis.text = element_text(face = "plain",
@@ -144,53 +148,13 @@ custom_theme <- theme(
   panel.background = element_blank()
 )
 
-# ==========================================================================
-# ==========================================================================
 
 
-
-
-
-# ==========================================================================
-# 3. Individual variance plot
-# ==========================================================================
-
-
-# Model 2 no rank ----------------------------------------------------------
+# Compute plots ------------------------------------------------------------
 
 p1 <- ggplot(
-  tab_a,
-  aes(x = Zcumul_xp,
-      y = estimate__ / 4,
-      color = predator_id)
-) +
-  geom_line(linewidth = 0.5, alpha = 0.25) +
-  scale_color_viridis(discrete = TRUE, option = "D") + #B
-  ylab("Hunting success\n") +
-  ggtitle("Model I") +
-  scale_y_continuous(breaks = seq(0, 1, 0.25),
-                     limits = c(0, 1)) +
-  scale_x_continuous(breaks = scaled_breaks,
-                     labels = seq(0, 500, 100)) +
-  xlab("\nCumulative experience") +
-  custom_theme
-
-# ==========================================================================
-# ==========================================================================
-
-
-
-
-
-# ==========================================================================
-# 4. Global trend plot
-# ==========================================================================
-
-# Model 2 no rank ----------------------------------------------------------
-
-p2 <- ggplot(
-  tab_b,
-  aes(x = Zcumul_xp,
+  preds_speed,
+  aes(x = prey_avg_speed,
       y = estimate__ / 4)
 ) +
   geom_ribbon(
@@ -202,41 +166,54 @@ p2 <- ggplot(
   ) +
   geom_line(linewidth = 1) +
   ylab("Hunting success\n") +
-  ggtitle("Model I") +
+  ggtitle("Model VI: rank + speed + space") +
   scale_y_continuous(
     breaks = seq(0, 1, 0.25),
     limits = c(0, 1)
   ) +
   scale_x_continuous(
-    breaks = scaled_breaks,
-    labels = seq(0, 500, 100)
+    breaks = seq(0, 4, 1),
+    limits = c(0, 4)
   ) +
-  xlab("\nCumulative experience") +
+  xlab("\nPrey speed (m/s)") +
   custom_theme
 
-# ==========================================================================
-# ==========================================================================
+
+p2 <- ggplot(
+  preds_space,
+  aes(x = prey_avg_amount_tiles_visited,
+      y = estimate__ / 4)
+) +
+  geom_ribbon(
+    aes(
+      ymin = lower__ / 4,
+      ymax = upper__ / 4
+    ),
+    fill = "gray"
+  ) +
+  geom_line(linewidth = 1) +
+  ylab("Hunting success\n") +
+  ggtitle("Model VI: rank + speed + space") +
+  scale_y_continuous(
+    breaks = seq(0, 1, 0.25),
+    limits = c(0, 1)
+  ) +
+  # scale_x_continuous(
+  #   breaks = seq(0, 4, 1),
+  #   limits = c(0.5, 4)
+  # ) +
+  xlab("\nPrey space covered") +
+  custom_theme
 
 
-
-
-
-# ==========================================================================
-# 3. Combine plots into 1 figure
-# ==========================================================================
 
 # Prepare figure ------------------------------------------------------------
 
-# Arrange paneled figure
 figure <- ggarrange(
   NULL, p1, NULL, p2,
   ncol = 4, nrow = 1,
-  labels = c(
-    "(A)", "", "(B)", ""
-  ),
-  widths = c(
-    0.15, 1.5, 0.15, 1.5
-  )
+  labels = c("(A)", "", "(B)", ""),
+  widths = c(0.15, 1.5, 0.15, 1.5)
 )
 
 
@@ -245,26 +222,13 @@ figure <- ggarrange(
 
 path <- file.path(getwd(), "outputs", "outputs_figures")
 
-# If using Windows
-# ggsave(
-#   figure,
-#   filename = file.path(path, "figureS3.png"),
-#   units = "in",
-#   dpi = 300,
-#   width = 10,
-#   height = 4
-# )
-
-# If using linux
 ggsave(
+  figure,
   filename = file.path(path, "figureS3.png"),
-  plot = figure,
   units = "in",
-  width = 10,
-  height = 4,
   dpi = 300,
-  device = grDevices::png,
-  type = "cairo-png"
+  width = 10,
+  height = 4
 )
 
 # ==========================================================================
