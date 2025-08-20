@@ -11,7 +11,9 @@ fitted_models <- c(
   "GAMM-III.rds", 
   "GAMM-IV.rds", 
   "GAMM-V.rds",
+  "GAMM-VI.rds",
   "LM-PreySpeed.rds",
+  "LM-PreySpace.rds",
   "GLM-RandomSample.rds"
 )
 
@@ -39,7 +41,7 @@ if (length(missing_files) > 0) {
   model_files <- files[files$name %in% fitted_models, ]
   
   # Download each model file
-  downloaded_files <- osf_download(model_files, path = local_dir, verbose = TRUE)
+  downloaded_files <- osf_download(model_files, path = local_dir, verbose = TRUE, conflicts="skip")
   
   # Verify that each file was successfully downloaded
   for (i in seq_along(fitted_models)) {

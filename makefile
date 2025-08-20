@@ -1,4 +1,4 @@
-# Command to download the GAMM fits from OSF
+# Command to download the model fits from OSF
 # Repository --> https://osf.io/hdv38/
 
 download-models:
