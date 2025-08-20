@@ -1,6 +1,6 @@
 ---
 title: |
-     Prey movement shapes the development of predator expertise in a virtual bi-trophic system: \
+     Implications of prey skill and antipredator behaviour in the acquisition of predator expertise: a virtual ecological study \
      Appendix
     
 output: 
@@ -31,7 +31,7 @@ library(dplyr)
 
 # Model fit
 fit <- readRDS(
-  here::here("outputs", "outputs_models", "DHMLM-RandomSample.rds")
+  here::here("outputs", "outputs_models", "GLM-RandomSample.rds")
 )
 
 # Fixed effects table
@@ -41,37 +41,26 @@ results <- data.table(
 )
 setnames(results, "rn", "parameter")
 
-# Trait variable (to remove after)
-results[parameter %like% "predspeed", trait := "predator speed"][
-  parameter %like% "preyavgspeed", trait := "prey speed"][
-    parameter %like% "success", trait := "hunting success"
-  ]
-
-# mu parameters table
-tab <- results[
-    !(parameter %like% "sigma"),
-    c(6, 1, 2, 4, 5)
-]
-tab <- tab[trait == "hunting success"]
 
 
 # Rename parameter values ---------------------------------------------------
 
 # Rename
-tab[,
+results[,
   parameter := 
       c("game duration",
         "cumulative experience",
+        "prey rank",
         "group 1",
         "group 4",
         "group 2",
         "group 3")
 ]
+
 # Reorder rows
-tab <- tab[
-  c(1,2,3,5,6,4)
+results <- results[
+  c(1,2,3,4,6,7,5)
 ]
-tab[, trait := NULL]
 
 # ===========================================================================
 # ===========================================================================
@@ -117,7 +106,7 @@ my_theme <- function(x, ...) {
 ```{r tableS1, ft.align = "left"}
 # Create the table ----------------------------------------------------------
 
-tabf <- tab %>%
+tabf <- results %>%
   flextable(col_keys = my_header$col_keys) %>%
   set_header_df(mapping = my_header, key = "col_keys") %>%
   my_theme() %>%
@@ -135,7 +124,7 @@ tabf <- tab %>%
     ref_symbols = " "
   ) %>%
   set_caption(
-    tab,
+    results,
     caption = "Table S1. Fixed effects table comparing the success of random groups of players with different amounts of matches played to the group presented in the main text.",
     style = "Table Caption"
   ) %>%
@@ -151,7 +140,7 @@ tabf
 
 \newpage
 
-```{r figS1, out.width = "100%", fig.cap = "Figure S1. Posterior distributions of the median hunting success per group of players. The values were back transformed to probability scale and can be interpreted as the probability of capturing the four prey. Group 1: <50 matches, Group 2: between 50 and 99 matches, Group 3: between 100 and 299 matches, Group 4: > 299 (i.e. group in the main text)."}
+```{r figS1, out.width = "100%", fig.cap = "**Figure S1**. Posterior distributions of the median hunting success per group of players. The values were back transformed to probability scale and can be interpreted as the probability of capturing the four prey. Group 1: <50 matches, Group 2: between 50 and 99 matches, Group 3: between 100 and 299 matches, Group 4: > 299 (i.e. group in the main text)."}
 
 knitr::include_graphics(
   here::here(
@@ -161,12 +150,24 @@ knitr::include_graphics(
 )
 ```
 
-```{r figS2, out.width = "100%", fig.cap = "Figure S2. Median posterior predictions of the relationship between hunting success (i.e. the probability of capturing the four prey) and the average speed of the prey group. The black line represents the median posterior predictions, and the gray band the the 89% compatibility interval. The predictions are from the model with the highest predictive accuracy (see Table 1 in main text)."}
+
+```{r figS2, out.width = "100%", fig.cap = "**Figure S2**. Median posterior predictions of the acquisition of predator hunting expertise for model I where we control for the game duration exclusively (no prey features). The predators' hunting success (i.e., the probability of consuming the four prey) is on the y-axis, and the predators' cumulative experience (i.e., the number of matches played before each observation) is on the x-axis. Panel A shows the acquisition of expertise for the average individual. Panel B shows among individual differences in the acquisition of expertise, with each curve representing an individual predator."}
 
 knitr::include_graphics(
   here::here(
     "outputs", "outputs_figures",
     "figureS2.png"
+  )
+)
+```
+
+
+```{r figS3, out.width = "100%", fig.cap = "**Figure S3**. Median posterior predictions of the relationship between hunting success (i.e. the probability of capturing the four prey) and the average speed (A) and average space coverage (B) of the prey group. The black line represents the median posterior predictions, and the gray band the the 89% compatibility interval. The predictions are from the model with the highest predictive accuracy (see Table 1 in main text)."}
+
+knitr::include_graphics(
+  here::here(
+    "outputs", "outputs_figures",
+    "figureS3.png"
   )
 )
 ```
