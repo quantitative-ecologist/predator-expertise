@@ -1,6 +1,6 @@
 ---
 title: |
-     Implications of prey skill and antipredator behaviour in the acquisition of predator expertise: a virtual ecological study \
+     Prey skill and behaviour in predator expertise acquisition: insights from a virtual ecosystem \
      Appendix
     
 output: 
