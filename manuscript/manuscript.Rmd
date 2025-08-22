@@ -45,15 +45,9 @@ dat[, date := as.POSIXct(sub(" .*", "", timestamp))]
 
 # ABSTRACT {.unnumbered}
 
-The acquisition of expertise is crucial for predators to be successful hunters. To achieve this, predators must hone their skills and gain knowledge through repeated and extensive practice. It is hypothesized that prey can interfere in this process and hinder the acquisition of predator expertise by employing antipredator tactics to evade detection and pursuit. However, empirical evidence on how predators acquire expertise through repeated encounters with their prey remains limited, largely due to the challenges of monitoring direct interactions in the wild. Here, we use the game *Dead by Daylight*, a virtual predator-prey system where a human predator chases four human prey, to investigate how experience shapes population and individual hunting success in predators across repeated interactions with their prey. We observed that predators were less successful when hunting faster prey or prey that covered more space in the virtual environment. As the prey gained skill, they also moved faster. Our analyses reveal that the predator population should optimize prey consumption over repeated encounters with prey of average skill, and optimize their success sooner if they consistently encounter prey moving at average speeds. However, both prey features did not mediate differences in expertise acquisition among individual predators. 
+The acquisition of expertise is crucial for predators to be successful hunters. To achieve this, predators must hone their skills and gain knowledge through repeated and extensive practice. It is hypothesized that prey can interfere in this process and hinder the acquisition of predator expertise by employing antipredator tactics to evade detection and pursuit. However, empirical evidence on how predators acquire expertise through repeated encounters with their prey remains limited, largely due to the challenges of monitoring direct interactions in the wild. Here, we use the game *Dead by Daylight*, a virtual predator-prey system where a human predator chases four human prey, to investigate how experience shapes population and individual hunting success in predators across repeated interactions with their prey. We observed that predators were less successful when hunting faster prey, prey that covered more space in the virtual environment, and prey that had greater skill. As the prey gained skill, they also moved faster, suggesting an improvement in antipredator behaviour. However, prey mpvement behaviour did not mediate differences in expertise acquisition among individual predators. Our results suggest that skilled prey use behaviours such as fast movement to outmanoeuver their predators, thereby impacting how predators acquire expertise at the population level. The predator population should optimize prey consumption over repeated encounters with prey of average skill, and optimize their success sooner if they consistently encounter prey moving at average speeds. 
 
-Our results suggest that skilled prey use behaviours such as fast movement to outmanoeuver their predators, thereby impacting how predators acquire expertise at the population level.
-
-
-impaired the acquisition of expertise by reducing hunting success
-
-
-Keywords: predator-prey, experience, learning, antipredator behaviour, virtual ecology, Dead by Daylight
+Keywords: predator-prey interactions, experience, learning, movement, virtual ecology, videogames
 
 
 
