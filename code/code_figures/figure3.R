@@ -1,13 +1,10 @@
 # ==========================================================================
 
-#                         Plot GAMM sds parameters
+#                          Plot regression models
+#                         of prey speed and space
+#                                 Figure 3
 
 # ==========================================================================
-
-# Figure of the posterior parameters for:
-#- Intercept standard deviation
-#- Slope standard deviation
-#- Wiggliness standard deviation
 
 
 
@@ -16,129 +13,56 @@
 # ==========================================================================
 
 
+
 # Load libraries and model -------------------------------------------------
 
+options(mc.cores = parallel::detectCores())
+
+library(parallel)
 library(brms)
+library(rstan)
 library(data.table)
 library(ggplot2)
-library(ggridges)
+library(viridis)
+library(ggpubr)
 
 path <- file.path(getwd(), "outputs", "outputs_models")
 
-fit1 <- readRDS(file.path(path, "GAMM-I.rds"))
-fit2 <- readRDS(file.path(path, "GAMM-II.rds"))
-fit5 <- readRDS(file.path(path, "GAMM-V.rds"))
-fit6 <- readRDS(file.path(path, "GAMM-VI.rds"))
-
-# ==========================================================================
-# ==========================================================================
+mod_speed <- readRDS(file.path(path, "LM-PreySpeed.rds"))
+mod_space <- readRDS(file.path(path, "LM-PreySpace.rds"))
 
 
 
+# Load the data ------------------------------------------------------------
 
-
-# ==========================================================================
-# 2. Extract posterior draws into a tidy table
-# ==========================================================================
-
-# Extract posterior draws fit
-post1 <- data.table(
-  as_draws_df(
-    fit1,
-    variable = c(
-      "sds_sZcumul_xppredator_id_1",
-      "sds_sZcumul_xppredator_id_2",
-      "sds_sZcumul_xppredator_id_3"
-    )
+data <- fread(
+  "./data/FraserFrancoetal2025-data.csv",
+  select = c(
+    "predator_id",
+    "game_duration",
+    "prey_avg_speed",
+    "prey_avg_amount_tiles_visited",
+    "prey_avg_rank"
   )
 )
 
+# Predator ID as factor
+data[, predator_id := as.factor(predator_id)]
 
-# Extract posterior draws fit
-post2 <- data.table(
-  as_draws_df(
-    fit2,
-    variable = c(
-      "sds_sZcumul_xppredator_id_1",
-      "sds_sZcumul_xppredator_id_2",
-      "sds_sZcumul_xppredator_id_3"
-    )
-  )
-)
+# Remove any NAs
+data <- data[complete.cases(data)]
 
 
-# Extract posterior draws fit1
-post5 <- data.table(
-  as_draws_df(
-    fit5,
-    variable = c(
-      "sds_sZcumul_xppredator_id_1",
-      "sds_sZcumul_xppredator_id_2",
-      "sds_sZcumul_xppredator_id_3"
-    )
-  )
-)
+# Standardise the variables (Z-scores) -------------------------------------
 
-# Extract posterior draws fit2
-post6 <- data.table(
-  as_draws_df(
-    fit7,
-    variable = c(
-      "sds_sZcumul_xppredator_id_1",
-      "sds_sZcumul_xppredator_id_2",
-      "sds_sZcumul_xppredator_id_3"
-    )
-  )
-)
-
-# Clear memory
-rm(fit1)
-rm(fit2)
-rm(fit5)
-rm(fit6)
-
-# Combine posterior draws
-figdat <- rbind(
-  post1,
-  post2,
-  post5,
-  post6
-)
-
-# Add model variable
-figdat[, model := c(rep("fit1", 4000), rep("fit2", 4000), rep("fit5", 4000), rep("fit6", 4000))]
-
-# ==========================================================================
-# ==========================================================================
-
-
-
-
-
-# ==========================================================================
-# 3. Summarize results from the posterior
-# ==========================================================================
-
-# Get intervals function
-get_HPD_interval <- function(x, prob = 0.95) {
-  interval <- coda::HPDinterval(as.mcmc(x), prob)
-  list(lower = interval[1], upper = interval[2])
+standardize <- function(x) {
+  (x - mean(x, na.rm = TRUE)) / sd(x, na.rm = TRUE)
 }
 
-# Declare the results function
-compute_results <- function(dt, col_name) {
-  x <- dt[[col_name]]
-  data.table(
-    column = col_name,
-    median = median(x),
-    lower_50 = get_HPD_interval(x, 0.50)$lower,
-    upper_50 = get_HPD_interval(x, 0.50)$upper,
-    lower_80 = get_HPD_interval(x, 0.80)$lower,
-    upper_80 = get_HPD_interval(x, 0.80)$upper,
-    lower_95 = get_HPD_interval(x, 0.95)$lower,
-    upper_95 = get_HPD_interval(x, 0.95)$upper
-  )
-}
+data[,
+  c("Zgame_duration", "Zprey_avg_rank") := lapply(.SD, standardize),
+  .SDcols = c(2, 5)
+]
 
 # ==========================================================================
 # ==========================================================================
@@ -148,90 +72,184 @@ compute_results <- function(dt, col_name) {
 
 
 # ==========================================================================
-# 4. Prepare table for ploting
+# 2. Prepare the data for the plots
 # ==========================================================================
+
+
+
+# Prepare the plots --------------------------------------------------------
+
+# To unscale prey rank
+mean_rank <- mean(data$prey_avg_rank)
+sd_rank <- sd(data$prey_avg_rank)
+
+# Prepare data for predictions
+new_data <- data.frame(
+  prey_avg_rank = seq(
+    min(data$prey_avg_rank),
+    max(data$prey_avg_rank),
+    length.out = 100
+  ),
+  Zgame_duration = 0,
+  predator_id = NA
+)
+
+# Standardize rank
+new_data$Zprey_avg_rank <- (new_data$prey_avg_rank - mean_rank) / sd_rank
+
+# Get posterior expected predictions
+epred_speed <- posterior_epred(mod_speed, newdata = new_data, re_formula = NA)
+epred_space <- posterior_epred(mod_space, newdata = new_data, re_formula = NA)
+
 
 # Convert to long format
-figdat_long <- melt(
-  figdat,
-  id.vars = "model",
-  measure.vars = patterns("^sds_sZcumul_xppredator_id_"),
-  variable.name = "parameter",
-  value.name = "value"
-)
+draws_long_speed <- as.data.table(t(epred_speed))
+draws_long_speed[, prey_avg_rank := new_data$prey_avg_rank]
+draws_long_speed <- melt(draws_long_speed, id.vars = "prey_avg_rank", variable.name = "draw")
 
-figdat_long[
-  , parameter := factor(
-    parameter,
-    levels = c("sds_sZcumul_xppredator_id_1",
-               "sds_sZcumul_xppredator_id_2",
-               "sds_sZcumul_xppredator_id_3"),
-    labels = c("Individual\nintercepts",
-               "Individual\nslopes",
-               "Individual\nwiggliness")
-  )
-]
-# ==========================================================================
-# ==========================================================================
+draws_long_space <- as.data.table(t(epred_space))
+draws_long_space[, prey_avg_rank := new_data$prey_avg_rank]
+draws_long_space <- melt(draws_long_space, id.vars = "prey_avg_rank", variable.name = "draw")
+
+# Compute the median and randomly sample 50 draws
+median_preds_speed <- draws_long_speed[, .(value = median(value)), by = prey_avg_rank]
+sampled_draws_speed <- draws_long_speed[draw %in% sample(unique(draw), 50)]
+
+median_preds_space <- draws_long_space[, .(value = median(value)), by = prey_avg_rank]
+sampled_draws_space <- draws_long_space[draw %in% sample(unique(draw), 50)]
 
 
 
+# Setup a custom theme for the plot ----------------------------------------
 
-
-# ==========================================================================
-# 5. Plot the posterior distribution of sds parameters
-# ==========================================================================
-
-# Prepare figure -----------------------------------------------------------
-
-# Custom theme
 custom_theme <- theme(
   # axis values size
-  axis.text = element_text(size = 15, color = "black"),
+  axis.text = element_text(face = "plain",
+                           size = 14,
+                           color = "black"),
+  # axis ticks lenght
+  axis.ticks.length = unit(.15, "cm"),
+  # axis ticks width
+  axis.ticks = element_line(linewidth = 0.90,
+                            color = "black"),
   # axis titles size
-  axis.title = element_text(size = 17),
-  strip.text.x = element_text(size = 15),
+  axis.title = element_text(size = 16,
+                            face = "plain",
+                            color = "black"),
+  axis.line = element_line(linewidth = 0.95,
+                           color = "black"),
+  legend.position = "none",
   panel.grid = element_blank(),
-  panel.background = element_blank(),
-  legend.title = element_text(size = 13),
-  legend.text = element_text(size = 13),
-  #legend.position = c(.73, .9),
-  legend.position = "top"
+  panel.background = element_blank()
 )
 
-p <- ggplot(
-  data = figdat_long,
-  aes(x = value, y = parameter, fill = model)
-)
+# ==========================================================================
+# ==========================================================================
 
-fig3 <- p + geom_density_ridges(
-  scale=0.75, alpha = 0.5,
-  quantile_lines = TRUE,
-  quantiles = 2,
-  rel_min_height = 0.0009
+
+
+
+
+# ==========================================================================
+# 3. Compute plot
+# ==========================================================================
+
+
+# Speed -----------------------------------------------------------------
+
+p1 <- ggplot() +
+  geom_hex(
+    data = data,
+    aes(x = prey_avg_rank, y = prey_avg_speed),
+    bins = 60
   ) +
-  scale_x_continuous(breaks = seq(0, 10, 2), limits = c(0, 11)) +
-  scale_fill_manual(
-    values = c("#f6d746", "#e55c30", "#781c6d", "#140b34"),
-    labels = c("Model I", "Model II", "Model V", "Model VI")
+  geom_line(
+    data = sampled_draws_speed,
+    aes(x = prey_avg_rank, y = value, group = draw),
+    alpha = 0.2,
+    color = "gray"
   ) +
-  labs(fill = " ") +
-  ylab("") +
-  xlab("\nStandard deviation") +
+  geom_line(
+    data = median_preds_speed,
+    aes(x = prey_avg_rank, y = value),
+    linewidth = 0.2,
+    color = "black"
+  ) +
+  ylab("Prey average speed\n") +
+  xlab("\nPrey rank") +
+  scale_y_continuous(
+    breaks = seq(0, 4, 1), 
+    limits = c(0, 4)
+  ) +
+  scale_x_continuous(
+    breaks = seq(0, max(data$prey_avg_rank), 5), 
+    limits = c(0, max(data$prey_avg_rank)+1)
+  ) +
+  scale_fill_viridis_c(option = "D", direction = -1) +
   theme_classic() +
-  custom_theme
+  custom_theme #+theme(plot.margin = margin(5, 20, 5, 5))
 
 
 
-# Save plot ----------------------------------------------------------------
+# Space covered ---------------------------------------------------------
 
-fig_path <- file.path(getwd(), "outputs", "outputs_figures")
+p2 <- ggplot() +
+  geom_hex(
+    data = data,
+    aes(x = prey_avg_rank, y = prey_avg_amount_tiles_visited),
+    bins = 60
+  ) +
+  geom_line(
+    data = sampled_draws_space,
+    aes(x = prey_avg_rank, y = value, group = draw),
+    alpha = 0.2,
+    color = "gray"
+  ) +
+  geom_line(
+    data = median_preds_space,
+    aes(x = prey_avg_rank, y = value),
+    linewidth = 0.2,
+    color = "black"
+  ) +
+  ylab("Prey average space covered\n") +
+  xlab("\nPrey rank") +
+#   scale_y_continuous(
+#     breaks = seq(0, 4, 1), 
+#     limits = c(0, 4)
+#   ) +
+  scale_x_continuous(
+    breaks = seq(0, max(data$prey_avg_rank), 5), 
+    limits = c(0, max(data$prey_avg_rank)+1)
+  ) +
+  scale_fill_viridis_c(option = "D", direction = -1) +
+  theme_classic() +
+  custom_theme# +theme(plot.margin = margin(5, 5, 5, 20))
+
+
+
+# Prepare figure ------------------------------------------------------------
+
+# Arrange paneled figure
+figure <- ggarrange(
+  NULL, p1, NULL, p2,
+  ncol = 4, nrow = 1,
+  labels = c("(A)", "", "(B)", ""),
+  widths = c(0.15, 1.5, 0.15, 1.5)
+)
+
+
+
+# Export the figure -----------------------------------------------------
+
+path <- file.path(getwd(), "outputs", "outputs_figures")
 
 ggsave(
-  fig3,
-  filename = file.path(fig_path, "figure3.png"),
-  width = 8.5,
-  height = 7.5
+  figure,
+  filename = file.path(path, "figure3.png"),
+  units = "in",
+  dpi = 300,
+  width = 10,
+  height = 4
 )
 
 # ==========================================================================
