@@ -160,14 +160,3 @@ knitr::include_graphics(
   )
 )
 ```
-
-
-```{r figS3, out.width = "100%", fig.cap = "**Figure S3**. Median posterior predictions of the relationship between hunting success (i.e. the probability of capturing the four prey) and the average speed (A) and average space coverage (B) of the prey group. The black line represents the median posterior predictions, and the gray band the the 89% compatibility interval. The predictions are from the model with the highest predictive accuracy (see Table 1 in main text)."}
-
-knitr::include_graphics(
-  here::here(
-    "outputs", "outputs_figures",
-    "figureS3.png"
-  )
-)
-```
