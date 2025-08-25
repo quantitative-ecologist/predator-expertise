@@ -40,9 +40,15 @@ dat[, c(2:6) := lapply(.SD, function(x) as.factor(x)), .SDcols = c(2:6)]
 dat[, date := as.POSIXct(sub(" .*", "", timestamp))]
 ```
 
+\newpage
+# LAY SUMMARY {.unnumbered}
+
+Predators acquire hunting expertise over successive encouters with their prey, allowing them to be more successful. Using a multiplayer videogame that simulates a predator-prey interaction, we show that the acquisition of predator expertise changes as a function of prey behaviour and skill. Our findings suggest that prey antipredator behaviour could mediate how predators learn and gain skills over time.
 
 
 
+
+\newpage
 # ABSTRACT {.unnumbered}
 
 The acquisition of expertise is crucial for predators to be successful hunters. To achieve this, predators must hone their skills and gain knowledge through repeated and extensive practice. It is hypothesized that prey can interfere in this process and hinder the acquisition of predator expertise by employing antipredator tactics to evade detection and pursuit. However, empirical evidence on how predators acquire expertise through repeated encounters with their prey remains limited, largely due to the challenges of monitoring direct interactions in the wild. Here, we use the game *Dead by Daylight*, a virtual predator-prey system where a human predator chases four human prey, to investigate how experience shapes population and individual hunting success in predators across repeated interactions with their prey. We observed that predators were less successful when hunting prey that were faster, occupied more space in the virtual environment, and possessed greater skill. As the prey gained skill, they also moved faster, suggesting an improvement in antipredator behaviour. However, prey movement behaviour did not mediate differences in expertise acquisition among individual predators. Our results suggest that skilled prey use behaviours such as fast movement to outmanoeuver their predators, thereby impacting how predators acquire expertise at the population level. The predator population should optimize prey consumption over repeated encounters with prey of average skill, and optimize their success sooner if they consistently encounter prey moving at average speeds. 
@@ -51,7 +57,7 @@ Keywords: predator-prey interactions, experience, learning, movement, virtual ec
 
 
 
-
+\newpage
 # INTRODUCTION {.unnumbered}
 
 Predation is an agent of evolutionary change that regulates prey populations, limits the spread of diseases, and mediates energy flow across trophic levels [@hairston1993;@abrams2000;@ripple.etal2014;@wirsing.etal2021]. These processes are driven by changes in predation risk and prey capture across landscapes as predators select suitable habitats to hunt and adjust their strategies accordingly  [@quevedo.etal2009;@pettorelli.etal2015;@labarge.etal2024;@schmitz2017]. Theory suggests that predators become more efficient hunters by acquiring expertise through practicing and learning the proper skills and tactics to locate, select, and capture their prey [@woo.etal2008;@wooster.etal2023;@labarge.etal2024]. This raises the hypothesis that differences in hunting success between predators may be attributed to differences in the capacity to acquire hunting expertise. Hence, unraveling how expertise emerges is essential to better assess how foraging behaviour shapes prey consumption during predator-prey interactions.
@@ -320,6 +326,15 @@ One criticism of using videogames to study behaviour is that neither the predato
 ## Conclusions
 
 We found support for the hypothesis that prey antipredator behaviour can drive the acquisition of hunting expertise using a human predator population in the game *Dead by Daylight*. However, the effect of antipredator behaviour was observed only at the population level. While there were important differences among individuals in expertise acquisition, we did not find evidence that they were mediated by the prey's movement behaviour. Future analyses should incorporate cognitive, physical and behavioural attributes of the prey to assess their influence on the acquisition of predator expertise, which may reveal important insights into the eco-evolutionary dynamics of predator-prey interactions. Our demonstration of how prey antipredator behaviour can mediate the acquisition of hunting expertise adds to a growing body of research showing how virtual systems can be used to test hypotheses on ecological interactions [@beauchamp2020;@cere.etal2021;@fraserfranco.etal2022;@lymbery.etal2023;@santostefano.etal2024]. We hope that this will inspire more collaborations between scientists and the videogame industry to tackle fundamental questions in ecology.
+
+
+
+
+# Data availability
+
+The data and code used to produce our analyses are fully available on this GitHub repository: https://github.com/quantitative-ecologist/predator-expertise.
+
+
 
 
 # REFERENCES {.unnumbered}
