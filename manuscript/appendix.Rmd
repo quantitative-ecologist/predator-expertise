@@ -1,6 +1,6 @@
 ---
 title: |
-     Prey movement shapes the development of predator expertise in a virtual bi-trophic system: \
+     "Implications of prey skill and antipredator behaviour in the acquisition of predator expertise: a virtual ecological study" \
      Appendix
     
 output: 
@@ -31,7 +31,7 @@ library(dplyr)
 
 # Model fit
 fit <- readRDS(
-  here::here("outputs", "outputs_models", "DHMLM-RandomSample.rds")
+  here::here("outputs", "outputs_models", "GLM-RandomSample.rds")
 )
 
 # Fixed effects table
