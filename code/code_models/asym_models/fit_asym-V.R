@@ -98,12 +98,9 @@ model_formula <- brmsformula(
       betaspeed * Zprey_speed +
       betaspace * Zprey_space,
 
-  # predator-specific asymptote (on logit scale)
-  a ~ 1 + Zprey_avg_rank + Zprey_speed + Zprey_space + (1 | predator_id),
-  # predator-specific start (on logit scale)
-  b ~ 1 + (1 | predator_id),
-  # predator-specific rate
-  c ~ 1 + Zprey_avg_rank + Zprey_speed + Zprey_space + (1 | predator_id),
+  a ~ 1 + Zprey_avg_rank + Zprey_speed + Zprey_space + (1 | p | predator_id),
+  b ~ 1 + (1 | p | predator_id),
+  c ~ 1 + Zprey_avg_rank + Zprey_speed + Zprey_space + (1 | p | predator_id),
 
   betaduration ~ 1,
   betarank ~ 1,
@@ -155,6 +152,9 @@ priors <- c(
   prior(normal(0.5, 0.5), nlpar = "betarank", class = "b"),
   prior(normal(-0.5, 0.5), nlpar = "betaspeed", class = "b"),
   prior(normal(-0.5, 0.5), nlpar = "betaspace", class = "b"),
+
+  # Prior on correlation matrix of random effects
+  prior(lkj(2), class = "cor"),
 
   # Shape parameter
   prior(normal(log(2), 0.5), class = "phi")
