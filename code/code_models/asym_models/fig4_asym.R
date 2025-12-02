@@ -6,9 +6,9 @@
 # ==========================================================================
 
 # Figure of the posterior parameters for:
-#- Intercept standard deviation
-#- Slope standard deviation
-#- Wiggliness standard deviation
+#- Baseline
+#- Rate
+#- Asymptote
 
 
 
@@ -24,11 +24,11 @@ library(data.table)
 library(ggplot2)
 library(ggridges)
 
-path <- file.path(getwd(), "code", "code_models", "asym_models")
+path <- file.path(getwd(), "outputs", "outputs_models")
 
 fit3 <- readRDS(file.path(path, "asym-III.rds"))
 fit4 <- readRDS(file.path(path, "asym-IV.rds"))
-
+fit5 <- readRDS(file.path(path, "asym-V.rds"))
 
 # ==========================================================================
 # ==========================================================================
@@ -41,55 +41,34 @@ fit4 <- readRDS(file.path(path, "asym-IV.rds"))
 # 2. Extract posterior draws into a tidy table
 # ==========================================================================
 
-# Extract posterior draws fit
-#post1 <- data.table(
-#  as_draws_df(
-#    fit1,
-#    variable = c(
-#      "sds_sZcumul_xppredator_id_1",
-#      "sds_sZcumul_xppredator_id_2",
-#      "sds_sZcumul_xppredator_id_3"
-#    )
-#  )
-#)
-
-
-# Extract posterior draws fit
-#post2 <- data.table(
-#  as_draws_df(
-#    fit2,
-#    variable = c(
-#      "sds_sZcumul_xppredator_id_1",
-#      "sds_sZcumul_xppredator_id_2",
-#      "sds_sZcumul_xppredator_id_3"
-#    )
-#  )
-#)
-
-
-# Extract posterior draws fit3
-post3 <- data.table(
-  as_draws_df(
-    fit3,
-    variable = c(
-      "sd_predator_id__a_Intercept",
-      "sd_predator_id__b_Intercept",
-      "sd_predator_id__c_Intercept"
+# Function to extract posterior draws
+extract_posterior_draws <- function(model, variables) {
+  post <- data.table(
+    as_draws_df(
+      model,
+      variable = variables
     )
   )
+  post
+}
+
+# Variables
+variables <- c(
+  "sd_predator_id__a_Intercept",
+  "sd_predator_id__b_Intercept",
+  "sd_predator_id__c_Intercept"
 )
 
-# Extract posterior draws fit4
-post4 <- data.table(
-  as_draws_df(
-    fit4,
-    variable = c(
-      "sd_predator_id__a_Intercept",
-      "sd_predator_id__b_Intercept",
-      "sd_predator_id__c_Intercept"
-    )
+models <- list(fit3, fit4, fit5)
+
+posterior_results <- list()
+
+for (i in seq_along(models)) {
+  posterior_results[[paste0("post", i)]] <- extract_posterior_draws(
+    models[[i]],
+    variables
   )
-)
+}
 
 # Clear memory
 #rm(fit1)
@@ -99,16 +78,16 @@ post4 <- data.table(
 
 # Combine posterior draws
 figdat <- rbind(
-  #post1,
   #post2,
-  post3,
-  post4
+  posterior_results$post1,
+  posterior_results$post2,
+  posterior_results$post3
 )
 
 # Add model variable
 #figdat[, model := c(rep("fit1", 4000), rep("fit2", 4000), rep("fit5", 4000), rep("fit6", 4000))]
 
-figdat[, model := c(rep("fit3", 12000), rep("fit6", 9000))]
+figdat[, model := c(rep("fit3", 12000), rep("fit4", 12000), rep("fit5", 12000))]
 
 # ==========================================================================
 # ==========================================================================
@@ -174,9 +153,9 @@ figdat_long[
     levels = c("sd_predator_id__a_Intercept",
                "sd_predator_id__b_Intercept",
                "sd_predator_id__c_Intercept"),
-    labels = c("Individual\nasymptote",
-               "Individual\nbaseline",
-               "Individual\nexpertise rate")
+    labels = c("Asymptote:\nlong-term hunting success",
+               "Baseline:\ninitial hunting success",
+               "Rate:\nexpertise acquisition")
   )
 ]
 # ==========================================================================
@@ -218,12 +197,12 @@ fig4 <- p + geom_density_ridges(
   quantiles = 2,
   rel_min_height = 0.0009
   ) +
-  scale_x_continuous(breaks = seq(0, 2, 0.5), limits = c(0, 3)) +
+  scale_x_continuous(breaks = seq(0, 1.5, 0.5), limits = c(0, 2)) +
   scale_fill_manual(
     #values = c("#f6d746", "#e55c30", "#781c6d", "#140b34"),
     #labels = c("Model I", "Model II", "Model V", "Model VI")
-    values = c("#781c6d", "#140b34"),
-    labels = c("Model III", "Model IV")
+    values = c("#e55c30", "#781c6d", "#140b34"),
+    labels = c("Model III", "Model IV", "Model V")
   ) +
   labs(fill = " ") +
   ylab("") +
@@ -231,7 +210,10 @@ fig4 <- p + geom_density_ridges(
   theme_classic() +
   custom_theme
 
+fig4
 
+path_to_save = file.path(getwd(), "test")
+ggsave(plot=fig4, filename=file.path(path_to_save, "fig4_asym.png"), dpi=300, width=10)
 
 
 # ==========================================================================
