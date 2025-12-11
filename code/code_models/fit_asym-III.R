@@ -1,9 +1,9 @@
 # ==========================================================================
 
 #                   Asymptotic model - Hunting success
-#                             Model III 
+#                               Model III
 #               - rank as fixed effect of hunting success
-#               - rank as fixed effect of a and c
+#               - prey speed as fixed effect of a and c
 
 # ==========================================================================
 
@@ -62,10 +62,10 @@ standardize <- function(x) {
 
 data[
   ,
-  c("Zprey_speed", "Zgame_duration", "Zcumul_xp", "Zprey_avg_rank") := lapply(
+  c("Zprey_speed", "Zgame_duration", "Zprey_avg_rank") := lapply(
     .SD, standardize
   ),
-  .SDcols = c("prey_avg_speed", "game_duration", "cumul_xp_pred", "prey_avg_rank")
+  .SDcols = c("prey_avg_speed", "game_duration", "prey_avg_rank")
 ]
 
 # ==========================================================================
@@ -85,13 +85,13 @@ data[
 
 model_formula <- brmsformula(
   hunting_success | trials(4) ~
-    a - (a - b) * exp(-exp(c) * Zcumul_xp) +
+    a - (a - b) * exp(-exp(c) * cumul_xp_pred) +
       betaduration * Zgame_duration +
       betarank * Zprey_avg_rank,
 
-  a ~ 1 + Zprey_avg_rank + (1 | p | predator_id),
+  a ~ 1 + Zprey_speed + (1 | p | predator_id),
   b ~ 1 + (1 | p | predator_id),
-  c ~ 1 + Zprey_avg_rank + (1 | p | predator_id),
+  c ~ 1 + Zprey_speed + (1 | p | predator_id),
 
   betaduration ~ 1,
   betarank ~ 1,
@@ -121,11 +121,11 @@ priors <- c(
   # Intercept on a, b, c
   prior(normal(1.386294, 0.7), nlpar = "a", class = "b", coef = "Intercept"),
   prior(normal(-1.098612, 0.7), nlpar = "b", class = "b", coef = "Intercept"),
-  prior(normal(0, 0.5), nlpar = "c", class = "b", coef = "Intercept"),
+  prior(normal(-5.5, 1), nlpar = "c", class = "b", coef = "Intercept"),
 
   # Fixed effects on a, c
-  prior(normal(0.3, 0.3), nlpar = "c", class = "b", coef = "Zprey_avg_rank"),
-  prior(normal(0.3, 0.3), nlpar = "a", class = "b", coef = "Zprey_avg_rank"),
+  prior(normal(-0.3, 0.3), nlpar = "c", class = "b", coef = "Zprey_speed"),
+  prior(normal(-0.3, 0.3), nlpar = "a", class = "b", coef = "Zprey_speed"),
 
   # Random effects on a, b, c
   prior(normal(0, 1), nlpar = "a", class = "sd"),
@@ -133,8 +133,8 @@ priors <- c(
   prior(normal(0, 1), nlpar = "c", class = "sd"),
 
   # Covariates on hunting success
-  prior(normal(0, 0.5), nlpar = "betaduration", class = "b"),
-  prior(normal(0, 0.5), nlpar = "betarank", class = "b"),
+  prior(normal(1, 0.5), nlpar = "betaduration", class = "b"),
+  prior(normal(0.5, 0.5), nlpar = "betarank", class = "b"),
 
   # Prior on correlation matrix of random effects
   prior(lkj(2), class = "cor"),
@@ -157,8 +157,8 @@ priors <- c(
 fit <- brm(
   formula = model_formula,
   family = beta_binomial(),
-  warmup = 1500,
-  iter = 7500,
+  warmup = 2500,
+  iter = 10500,
   thin = 2,
   chains = 4,
   threads = threading(8),

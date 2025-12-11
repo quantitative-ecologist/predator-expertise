@@ -59,10 +59,10 @@ standardize <- function(x) {
 
 data[
   ,
-  c("Zprey_speed", "Zgame_duration", "Zcumul_xp") := lapply(
+  c("Zprey_speed", "Zgame_duration") := lapply(
     .SD, standardize
   ),
-  .SDcols = c("prey_avg_speed", "game_duration", "cumul_xp_pred")
+  .SDcols = c("prey_avg_speed", "game_duration")
 ]
 
 # ==========================================================================
@@ -82,7 +82,7 @@ data[
 
 model_formula <- brmsformula(
   hunting_success | trials(4) ~
-    a - (a - b) * exp(-exp(c) * Zcumul_xp) +
+    a - (a - b) * exp(-exp(c) * cumul_xp_pred) +
       betaduration * Zgame_duration,
 
   a ~ 1 + (1 | p | predator_id), # (on logit scale)
@@ -116,7 +116,7 @@ priors <- c(
   # Intercept on a, b, c
   prior(normal(1.386294, 0.7), nlpar = "a", class = "b", coef = "Intercept"),
   prior(normal(-1.098612, 0.7), nlpar = "b", class = "b", coef = "Intercept"),
-  prior(normal(0, 0.5), nlpar = "c", class = "b", coef = "Intercept"),
+  prior(normal(-5.5, 1), nlpar = "c", class = "b", coef = "Intercept"),
 
   # Random effects on a, b, c
   prior(normal(0, 1), nlpar = "a", class = "sd"),
