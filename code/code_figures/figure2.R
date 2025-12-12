@@ -1,10 +1,10 @@
 # ==========================================================================
 
-#               Figure of the relationship between success 
-#                     and prey speed, space, and rank
-#                               Figure 2
+#                                 Figure 2
+#             Plot fixed effects on asymptote and rate parameters
 
 # ==========================================================================
+
 
 
 
@@ -13,39 +13,16 @@
 # ==========================================================================
 
 
-# Load libraries -----------------------------------------------------------
+# Load libraries and model -------------------------------------------------
 
-library(data.table)
 library(brms)
+library(data.table)
 library(ggplot2)
-library(ggpubr)
-library(viridis)
-
-
-
-# Import model -------------------------------------------------------------
+library(ggridges)
 
 path <- file.path(getwd(), "outputs", "outputs_models")
-fit <- readRDS(file.path(path, "GAMM-VI.rds"))
+fit5 <- readRDS(file.path(path, "asym-VII.rds"))
 
-
-
-# Load the data ------------------------------------------------------------
-
-data <- fread(
-  "./data/FraserFrancoetal2025-data.csv",
-  select = c("predator_id",
-             "game_duration",
-             "pred_speed",
-             "prey_avg_speed",
-             "prey_avg_amount_tiles_visited",
-             "prey_avg_rank",
-             "cumul_xp_pred",
-             "total_xp_pred",
-             "hunting_success")
-)
-
-data[, predator_id := as.factor(predator_id)]
 # ==========================================================================
 # ==========================================================================
 
@@ -54,221 +31,275 @@ data[, predator_id := as.factor(predator_id)]
 
 
 # ==========================================================================
-# 2. Compute the predictions
+# 2. Extract posterior draws of predictions into a tidy table
 # ==========================================================================
 
-
-# Predictions --------------------------------------------------------------
-
-preds <- conditional_effects(
-  x = fit,
-  method = "fitted",
-  effects = c("Zprey_speed", "Zprey_space", "Zprey_avg_rank"),
+# Function
+make_ce_df <- function(
+  fit, nlpar, effects, labels,
   prob = 0.89,
+  method = "fitted",
   robust = TRUE,
-  re_formula = NULL,
-  conditions = data.frame(predator_id = NA)
-)
-preds_speed <- data.table(preds[[1]])
-preds_space <- data.table(preds[[2]])
-preds_rank <- data.table(preds[[3]])
+  re_formula = NULL
+) {
+  if (length(effects) != length(labels)) {
+    stop("effects and labels must have the same length.")
+  }
 
+  out_list <- vector("list", length(effects))
 
+  for (i in seq_along(effects)) {
+    ce <- conditional_effects(
+      x = fit,
+      effects = effects[i],
+      nlpar = nlpar,
+      prob = prob,
+      robust = robust,
+      re_formula = re_formula,
+      method = method
+    )[[1]]
 
-# Transform values --------------------------------------------------------
+    # variable label
+    ce$variable <- labels[i]
 
-# Back transform x-axis values
-range_speed <- seq(
-  min(data$prey_avg_speed, na.rm = TRUE),
-  max(data$prey_avg_speed, na.rm = TRUE),
-  length.out = 5
-)
-range_space <- seq(
-  min(data$prey_avg_amount_tiles_visited, na.rm = TRUE),
-  max(data$prey_avg_amount_tiles_visited, na.rm = TRUE),
-  length.out = 5
-)
-range_rank <- seq(
-  min(data$prey_avg_rank, na.rm = TRUE),
-  max(data$prey_avg_rank, na.rm = TRUE),
-  length.out = 5
-)
+    # Columns for plotting
+    ce <- ce[, c("variable", "effect1__", "estimate__", "lower__", "upper__")]
 
-speed_sequence <- range_speed - mean(data$prey_avg_speed, na.rm = TRUE)
-space_sequence <- range_space - mean(data$prey_avg_amount_tiles_visited
-, na.rm = TRUE)
-rank_sequence <- range_rank - mean(data$prey_avg_rank, na.rm = TRUE)
+    out_list[[i]] <- ce
+  }
 
-speed_standev <- sd(data$prey_avg_speed, na.rm = TRUE)
-space_standev <- sd(data$prey_avg_amount_tiles_visited, na.rm = TRUE)
-rank_standev <- sd(data$prey_avg_rank, na.rm = TRUE)
-
-speed_scaled_breaks <- speed_sequence / speed_standev
-space_scaled_breaks <- space_sequence / space_standev
-rank_scaled_breaks <- rank_sequence / rank_standev
-
-# Function to apply transformation
-# Computes non standardized cumulative XP
-speed_func <- function(x) {
-  x[, prey_avg_speed := (Zprey_speed * speed_standev) + mean(data$prey_avg_speed, na.rm = TRUE)]
+  # bind into one data frame
+  do.call(rbind, out_list)
 }
 
-space_func <- function(x) {
-  x[, prey_avg_amount_tiles_visited := (Zprey_space * space_standev) + mean(data$prey_avg_amount_tiles_visited, na.rm = TRUE)]
-}
+# Select traits ------------------------------------------------------------
 
-rank_func <- function(x) {
-  x[, prey_avg_rank := (Zprey_avg_rank * rank_standev) + mean(data$prey_avg_rank, na.rm = TRUE)]
-}
-
-# Apply function
-speed_func(preds_speed)
-space_func(preds_space)
-rank_func(preds_rank)
-
-# ==========================================================================
-# ==========================================================================
+effects_prey  <- c("Zprey_speed", "Zprey_space")
+labels_prey <- c("prey_speed", "prey_space")
 
 
 
+# Prepare tables -----------------------------------------------------------
 
-
-# ==========================================================================
-# 4. Plot the posterior distributions
-# ==========================================================================
-
-
-# Figure theme -------------------------------------------------------------
-
-custom_theme <- theme(
-  # Title
-  plot.title = element_text(size = 12),
-  # axis values size
-  axis.text = element_text(face = "plain",
-                           size = 14,
-                           color = "black"),
-  # axis ticks lenght
-  axis.ticks.length = unit(.15, "cm"),
-  # axis ticks width
-  axis.ticks = element_line(linewidth = 0.90,
-                            color = "black"),
-  # axis titles size
-  axis.title = element_text(size = 16,
-                            face = "plain",
-                            color = "black"),
-  axis.line = element_line(linewidth = 0.95,
-                           color = "black"),
-  legend.position = "none",
-  panel.grid = element_blank(),
-  panel.background = element_blank()
+df_a <- make_ce_df(
+  fit = fit5,
+  nlpar = "a",
+  effects = effects_prey,
+  labels  = labels_prey
 )
 
+df_c <- make_ce_df(
+  fit = fit5,
+  nlpar = "c",
+  effects = effects_prey,
+  labels = labels_prey
+)
+
+df_a$parameter <- "Maximum hunting success (a)"
+df_c$parameter <- "Rate of gain in expertise (c)"
+df <- rbind(df_a, df_c)
+
+# ==========================================================================
+# ==========================================================================
 
 
-# Compute plots ------------------------------------------------------------
 
-p1 <- ggplot(
-  preds_speed,
-  aes(x = prey_avg_speed,
-      y = estimate__ / 4)
-) +
-  geom_ribbon(
-    aes(
-      ymin = lower__ / 4,
-      ymax = upper__ / 4
-    ),
-    fill = "gray"
+
+# ==========================================================================
+# 3. Extract posterior draws of individual means
+# ==========================================================================
+
+mf <- model.frame(fit5)
+dt <- as.data.table(mf)
+
+pred_covars <- dt[, .(
+  #Zprey_avg_rank = mean(Zprey_avg_rank),
+  Zprey_speed = mean(Zprey_speed),
+  Zprey_space = mean(Zprey_space)
+), by = predator_id]
+
+draws <- as_draws_df(fit5)
+
+make_pred_values <- function(fit, draws, param, prob = 0.89) {
+  alpha <- (1 - prob) / 2
+  lower_p <- alpha
+  upper_p <- 1 - alpha
+
+  # Names of fixed-effect columns for this parameter
+  b_int   <- paste0("b_", param, "_Intercept")
+  #b_rank  <- paste0("b_", param, "_Zprey_avg_rank")
+  b_speed <- paste0("b_", param, "_Zprey_speed")
+  b_space <- paste0("b_", param, "_Zprey_space")
+
+  n_pred <- nrow(pred_covars)
+  est <- numeric(n_pred)
+  lower <- numeric(n_pred)
+  upper <- numeric(n_pred)
+
+  for (i in seq_len(n_pred)) {
+    pid <- pred_covars$predator_id[i]
+
+    # Random intercept column for this predator and param
+    re_col <- grep(
+      pattern = paste0("^r_predator_id__", param, "\\[", pid, ",Intercept\\]$"),
+      x = names(draws),
+      value = TRUE
+    )
+
+    lin <- draws[[b_int]] +
+      #draws[[b_rank]] * pred_covars$Zprey_avg_rank[i] +
+      draws[[b_speed]] * pred_covars$Zprey_speed[i] +
+      draws[[b_space]] * pred_covars$Zprey_space[i] +
+      draws[[re_col]]
+
+    est[i] <- stats::quantile(lin, 0.5)
+    lower[i] <- stats::quantile(lin, lower_p)
+    upper[i] <- stats::quantile(lin, upper_p)
+  }
+
+  data.frame(
+    predator_id = pred_covars$predator_id,
+    estimate__ = est,
+    lower__ = lower,
+    upper__ = upper,
+    #Zprey_avg_rank = pred_covars$Zprey_avg_rank,
+    Zprey_speed = pred_covars$Zprey_speed,
+    Zprey_space = pred_covars$Zprey_space,
+    stringsAsFactors = FALSE
+  )
+}
+
+# Predator-specific a_j and c_j
+pred_a_vals <- make_pred_values(fit5, draws, "a")
+pred_c_vals <- make_pred_values(fit5, draws, "c")
+
+df_a_speed <- data.frame(
+  predator_id = pred_a_vals$predator_id,
+  variable = "prey_speed",
+  effect1__ = pred_a_vals$Zprey_speed,
+  estimate__ = pred_a_vals$estimate__,
+  lower__ = pred_a_vals$lower__,
+  upper__ = pred_a_vals$upper__,
+  parameter = "Maximum hunting success (a)",
+  stringsAsFactors = FALSE
+)
+
+df_a_space <- data.frame(
+  predator_id = pred_a_vals$predator_id,
+  variable = "prey_space",
+  effect1__ = pred_a_vals$Zprey_space,
+  estimate__ = pred_a_vals$estimate__,
+  lower__ = pred_a_vals$lower__,
+  upper__ = pred_a_vals$upper__,
+  parameter = "Maximum hunting success (a)",
+  stringsAsFactors = FALSE
+)
+
+df_c_speed <- data.frame(
+  predator_id = pred_c_vals$predator_id,
+  variable = "prey_speed",
+  effect1__ = pred_c_vals$Zprey_speed,
+  estimate__ = pred_c_vals$estimate__,
+  lower__ = pred_c_vals$lower__,
+  upper__ = pred_c_vals$upper__,
+  parameter = "Rate of gain in expertise (c)",
+  stringsAsFactors = FALSE
+)
+
+df_c_space <- data.frame(
+  predator_id = pred_c_vals$predator_id,
+  variable = "prey_space",
+  effect1__ = pred_c_vals$Zprey_space,
+  estimate__ = pred_c_vals$estimate__,
+  lower__ = pred_c_vals$lower__,
+  upper__ = pred_c_vals$upper__,
+  parameter = "Rate of gain in expertise (c)",
+  stringsAsFactors = FALSE
+)
+
+df_pred <- rbind(df_a_speed, df_a_space, df_c_speed, df_c_space)
+
+# ==========================================================================
+# ==========================================================================
+
+
+
+
+# ==========================================================================
+# 4. Build the figure of regression on individual means
+# ==========================================================================
+
+# Prepare figure -----------------------------------------------------------
+
+panel_names <- c(
+#  prey_rank = "Average prey rank",
+  prey_speed = "Average prey speed",
+  prey_space = "Average prey space coverage"
+)
+
+fixef <- ggplot() +
+  geom_blank(
+    data = subset(df, parameter == "Maximum hunting success (a)"),
+    aes(x = 0, y = -4.5)
   ) +
-  geom_line(linewidth = 1) +
-  ylab("Hunting success\n") +
-  ggtitle("Model VI: rank + speed + space") +
-  scale_y_continuous(
-    breaks = seq(0, 1, 0.25),
-    limits = c(0, 1)
+  geom_blank(
+    data = subset(df, parameter == "Maximum hunting success (a)"),
+    aes(x = 0, y = 3)
+  ) +
+  geom_blank(
+    data = subset(df, parameter == "Rate of gain in expertise (c)"),
+    aes(x = 0, y = -1.5)
+  ) +
+  geom_blank(
+    data = subset(df, parameter == "Rate of gain in expertise (c)"),
+    aes(x = 0, y = 1.5)
+  ) +
+  geom_line(
+    data = df,
+    aes(x = effect1__, y = estimate__),
+    linewidth = 1.1
+  ) +
+  geom_ribbon(
+    data = df,
+    aes(x = effect1__, ymin = lower__, ymax = upper__),
+    alpha = 0.2
+  ) +
+  geom_pointrange(
+    data = df_pred,
+    aes(x = effect1__, y = estimate__, ymin = lower__, ymax = upper__),
+    size  = 0.2,
+    alpha = 0.2,
+    position = position_jitter(width = 0.03, height = 0)
   ) +
   scale_x_continuous(
-    breaks = seq(0, 4, 1),
-    limits = c(0, 4)
+    breaks = seq(-2, 2, 0.5),
+    limits = c(-1.5, 1.5)
   ) +
-  xlab("\nPrey speed (m/s)") +
-  custom_theme
-
-
-p2 <- ggplot(
-  preds_space,
-  aes(x = prey_avg_amount_tiles_visited,
-      y = estimate__ / 4)
-) +
-  geom_ribbon(
-    aes(
-      ymin = lower__ / 4,
-      ymax = upper__ / 4
-    ),
-    fill = "gray"
+  facet_grid(
+    parameter ~ variable,
+    scales = "free_y",
+    labeller = labeller(variable = panel_names)
   ) +
-  geom_line(linewidth = 1) +
-  ylab("Hunting success\n") +
-  ggtitle("Model VI: rank + speed + space") +
-  scale_y_continuous(
-    breaks = seq(0, 1, 0.25),
-    limits = c(0, 1)
+  labs(,
+    x = "Predictor (scaled)",
+    y = "Parameter value"
   ) +
-  # scale_x_continuous(
-  #   breaks = seq(0, 4, 1),
-  #   limits = c(0.5, 4)
-  # ) +
-  xlab("\nPrey space covered") +
-  custom_theme
-
-p3 <- ggplot(
-  preds_rank,
-  aes(x = prey_avg_rank,
-      y = estimate__ / 4)
-) +
-  geom_ribbon(
-    aes(
-      ymin = lower__ / 4,
-      ymax = upper__ / 4
-    ),
-    fill = "gray"
-  ) +
-  geom_line(linewidth = 1) +
-  ylab("Hunting success\n") +
-  ggtitle("Model VI: rank + speed + space") +
-  scale_y_continuous(
-    breaks = seq(0, 1, 0.25),
-    limits = c(0, 1)
-  ) +
-   scale_x_continuous(
-     breaks = seq(0, 20, 5),
-     limits = c(0, 21)
-   ) +
-  xlab("\nPrey rank") +
-  custom_theme
+  theme_bw(base_size = 14) +
+  theme(
+    panel.grid = element_blank(),
+    panel.background = element_blank(),
+    strip.text = element_text(size = 12, face = "bold")
+  )
+fixef
 
 
-# Prepare figure ------------------------------------------------------------
-
-figure <- ggarrange(
-  NULL, p1, NULL, p2, NULL, p3,
-  ncol = 6, nrow = 1,
-  labels = c("(A)", "", "(B)", "", "(C)", ""),
-  widths = c(0.15, 1.5, 0.15, 1.5, 0.15, 1.5)
-)
-
-
-
-# Export the figure -----------------------------------------------------
-
-path <- file.path(getwd(), "outputs", "outputs_figures")
-
+path_to_save <- file.path(getwd(), "outputs", "outputs_figures")
 ggsave(
-  figure,
-  filename = file.path(path, "figure2.png"),
-  units = "in",
+  plot = fixef,
+  filename = file.path(path_to_save, "figure2.png"),
   dpi = 300,
-  width = 15,
-  height = 4
+  height = 6,
+  width = 8
 )
 
 # ==========================================================================
