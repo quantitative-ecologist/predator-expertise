@@ -41,7 +41,7 @@ data <- fread(
   select = c("predator_id",
              "hunting_success",
              "prey_avg_speed",
-             "prey_avg_amount_tiles_visited",
+             "prey_avg_space_rate",
              "game_duration",
              "cumul_xp_pred",
              "prey_avg_rank")
@@ -52,6 +52,9 @@ data[, predator_id := as.factor(predator_id)]
 
 # Remove any NAs
 data <- data[complete.cases(data)]
+
+# Space rate within 0.2
+data <- data[prey_avg_space_rate <= 0.2]
 
 
 
@@ -68,7 +71,7 @@ data[
     .SD, standardize
   ),
   .SDcols = c(
-    "prey_avg_speed", "prey_avg_amount_tiles_visited",
+    "prey_avg_speed", "prey_avg_space_rate",
     "game_duration", "prey_avg_rank"
   )
 ]
