@@ -18,13 +18,13 @@
 library(brms)
 library(data.table)
 library(ggplot2)
-library(ggridges)
+library(ggpubr)
 
 path <- file.path(getwd(), "outputs", "outputs_models")
 
-fit3 <- readRDS(file.path(path, "asym-II.rds"))
-fit4 <- readRDS(file.path(path, "asym-III.rds"))
-fit5 <- readRDS(file.path(path, "asym-IV.rds"))
+fit2 <- readRDS(file.path(path, "asym-II.rds"))
+fit3 <- readRDS(file.path(path, "asym-III.rds"))
+fit4 <- readRDS(file.path(path, "asym-IV.rds"))
 
 # ==========================================================================
 # ==========================================================================
@@ -40,78 +40,111 @@ fit5 <- readRDS(file.path(path, "asym-IV.rds"))
 
 # Function to process draws ------------------------------------------------
 
-summarise_param_dt <- function(draws_dt, param) {
+extract_pred_id <- function(x) sub("^r_predator_id__[abc]\\[([^,]+),Intercept\\]$", "\\1", x)
 
-  # Global intercept column
-  global_col <- paste0("b_", param, "_Intercept")
+pred_total_from_draws <- function(fit, nlpar = c("a", "b", "c"), prob = 0.89) {
+  draws <- as_draws_df(fit)
+  nlpar <- match.arg(nlpar)
 
-  # Random-effect columns for this parameter
-  re_cols <- grep(
-    paste0("^r_predator_id__", param, "\\["),
-    names(draws_dt),
-    value = TRUE
+  # fixed intercept draws
+  bname <- paste0("b_", nlpar, "_Intercept")
+  b_int <- draws[[bname]]
+
+  # random intercept draws columns
+  patt <- paste0("^r_predator_id__", nlpar, "\\[[^,]+,Intercept\\]$")
+  rcols <- grep(patt, names(draws), value = TRUE)
+
+  # compute total draws per predator: fixed + random
+  rmat <- as.matrix(draws[, rcols, drop = FALSE])
+  total_mat <- sweep(x = rmat, MARGIN = 1, STATS = b_int, FUN = "+")
+
+  # summarize each predator column
+  alpha <- (1 - prob) / 2
+  qs <- apply(
+    x = total_mat,
+    MARGIN = 2,
+    FUN = quantile,
+    probs = c(alpha, 0.5, 1 - alpha),
+    na.rm = TRUE
   )
 
-  # Keep only needed columns + a draw index
-  sub_dt <- draws_dt[, c(global_col, re_cols), with = FALSE]
-  sub_dt[, .draw := .I]
-
-  # Melt to long format
-  long_dt <- melt(
-    sub_dt,
-    id.vars = c(".draw", global_col),
-    measure.vars = re_cols,
-    variable.name = "re_name",
-    value.name = "re"
+  out <- data.table(
+    predator_id = extract_pred_id(colnames(total_mat)),
+    lower = as.numeric(qs[1, ]),
+    est   = as.numeric(qs[2, ]),
+    upper = as.numeric(qs[3, ])
   )
 
-  # Extract predator_id from column names:
-  # e.g. "r_predator_id__a[pred143150,Intercept]" -> "pred143150"
-  long_dt[
-    , predator_id := sub(
-        paste0("r_predator_id__", param, "\\[([^,]+),Intercept\\]"),
-        "\\1",
-        re_name
-    )
-  ]
-
-  # Predator-specific parameter value = global intercept + random effect
-  long_dt[, value := get(global_col) + re]
-
-  # Summaries by predator
-  pred_summ <- long_dt[,
-    .(
-      med = median(value),
-      q5.5 = quantile(value, 0.055),
-      q94.5 = quantile(value, 0.945)
-    ),
-    by = predator_id
-  ]
-
-  # Global median (population-level intercept only)
-  global_med <- median(draws_dt[[global_col]])
-
-  list(
-    pred = pred_summ,
-    global_med = global_med
+  setnames(
+    out,
+    c("lower", "est", "upper"),
+    paste0(nlpar, c("_lower", "_est", "_upper"))
   )
+  out[]
 }
-
 
 
 # Process draws ------------------------------------------------------------
 
-draws <- as.data.table(as_draws_df(fit5))
+prob_ci <- 0.89
+dt_a <- pred_total_from_draws(
+  fit = fit2,
+  nlpar = "a",
+  prob = prob_ci
+)
+dt_b <- pred_total_from_draws(
+  fit = fit2,
+  nlpar = "b",
+  prob = prob_ci
+)
+dt_c <- pred_total_from_draws(
+  fit = fit2,
+  nlpar = "c",
+  prob = prob_ci
+)
 
-a_res <- summarise_param_dt(draws, "a")
-b_res <- summarise_param_dt(draws, "b")
-c_res <- summarise_param_dt(draws, "c")
+# Combine the tables together
+dt <- Reduce(
+  function(x, y) merge(x, y, by = "predator_id"),
+  list(dt_a, dt_b, dt_c)
+)
 
-a_dt <- a_res$pred[, `:=`(param = "a", global_med = a_res$global_med)]
-b_dt <- b_res$pred[, `:=`(param = "b", global_med = b_res$global_med)]
-c_dt <- c_res$pred[, `:=`(param = "c", global_med = c_res$global_med)]
 
-all_dt <- rbindlist(list(a_dt, b_dt, c_dt))
+
+# Get correlations ---------------------------------------------------------
+
+# Function to summarize vector of correlations
+summ_vec <- function(x, prob = 0.89) {
+  alpha <- (1 - prob) / 2
+  qs <- quantile(
+    x,
+    probs = c(alpha, 0.5, 1 - alpha),
+    na.rm = TRUE
+  )
+  list(
+    lower = unname(qs[1]),
+    median = unname(qs[2]),
+    upper = unname(qs[3])
+  )
+}
+# Function that applies summ_vec
+summ_draws <- function(x, prob = 0.89) summ_vec(x, prob)
+
+# Get draws
+draws <- as_draws_df(fit2)
+
+rho_ab <- summ_draws(
+  draws[["cor_predator_id__a_Intercept__b_Intercept"]],
+  prob_ci
+)
+rho_ac <- summ_draws(
+  draws[["cor_predator_id__a_Intercept__c_Intercept"]],
+  prob_ci
+)
+rho_bc <- summ_draws(
+  draws[["cor_predator_id__b_Intercept__c_Intercept"]],
+  prob_ci
+)
 
 # ==========================================================================
 # ==========================================================================
@@ -123,54 +156,133 @@ all_dt <- rbindlist(list(a_dt, b_dt, c_dt))
 # 3. Plot the posterior distribution of predator means
 # ==========================================================================
 
-# Prepare figure -----------------------------------------------------------
 
-panel_names <- c(
-  a = "a: Asymptote (long-term hunting success)",
-  b = "b: Baseline (initial hunting success)",
-  c = "c: Rate (expertise acquisition)"
+# Custom theme -------------------------------------------------------------
+
+custom_theme <- theme(
+  plot.title = element_text(size = 14),
+  axis.text = element_text(face = "plain", size = 14, color = "black"),
+  axis.ticks.length = unit(.15, "cm"),
+  axis.ticks = element_line(linewidth = 0.90, color = "black"),
+  axis.title = element_text(size = 16, face = "plain", color = "black"),
+  axis.line = element_line(linewidth = 0.95, color = "black"),
+  legend.position = "none",
+  panel.grid = element_blank(),
+  panel.background = element_blank()
 )
 
-ranef <- ggplot(all_dt, aes(x = reorder(predator_id, med), y = med)) +
-  geom_hline(
-    aes(yintercept = global_med),
-    linetype = "dashed",
-    color = "purple"
-  ) +
-  geom_point(fill = "#bebebead", shape = 16) +
-  geom_errorbar(aes(ymin = q5.5, ymax = q94.5), width = 0, alpha = 0.5) +
-  coord_flip() +
-  facet_wrap(
-    ~ param,
-    scales = "free_x",
-    labeller = labeller(param = panel_names)
-  ) +
-  labs(
-    x = "Predator",
-    y = "Parameter value"
-  ) +
-  theme_bw() +
-  theme(
-    axis.text.y = element_blank(),
-    axis.ticks.y = element_blank(),
-    panel.grid = element_blank(),
-    panel.background = element_blank(),
-    strip.text = element_text(size = 12, face = "bold")
+
+
+# Prepare figure -----------------------------------------------------------
+
+param_labels <- c(
+  a = "Maximum hunting success (a)",
+  b = "Initial hunting success (b)",
+  c = "Rate of gain (c)"
+)
+
+make_pair_panel <- function(dt, x, y, rho, labels) {
+  x_est <- paste0(x, "_est")
+  x_lo <- paste0(x, "_lower")
+  x_hi <- paste0(x, "_upper")
+  y_est <- paste0(y, "_est")
+  y_lo <- paste0(y, "_lower")
+  y_hi <- paste0(y, "_upper")
+
+  # Correlations
+  lab <- sprintf(
+    "cor. = %.2f [%.2f, %.2f]",
+    rho$median,
+    rho$lower,
+    rho$upper
   )
+
+  # Plot
+  ggplot(dt, aes(x = .data[[x_est]], y = .data[[y_est]])) +
+    geom_errorbar(
+      aes(ymin = .data[[y_lo]], ymax = .data[[y_hi]]),
+      width = 0,
+      alpha = 0.25
+    ) +
+    geom_errorbarh(
+      aes(xmin = .data[[x_lo]], xmax = .data[[x_hi]]),
+      height = 0,
+      alpha = 0.25
+    ) +
+    geom_point(alpha = 0.5, size = 1.8) +
+    geom_smooth(
+      method = "lm",
+      linetype = 1,
+      color = "#e55c30",
+      se = FALSE
+    ) +
+    annotate(
+      "text",
+      x = -Inf,
+      y = Inf,
+      label = lab,
+      hjust = -0.05,
+      vjust = 1.1,
+      size = 5
+    ) +
+    coord_cartesian(clip = "off") +
+    labs(
+      x = paste0("\n", labels[[x]]),
+      y = paste0(labels[[y]], "\n")
+    ) +
+    custom_theme
+}
+
+p_ab <- make_pair_panel(
+  dt = dt,
+  x = "a",
+  y = "b",
+  rho = rho_ab,
+  labels = param_labels
+)
+p_ab <- p_ab +
+  scale_x_continuous(breaks = seq(-4, 4, 2), limits = c(-4.3, 4))
+
+p_ac <- make_pair_panel(
+  dt = dt,
+  x = "a",
+  y = "c",
+  rho = rho_ac,
+  labels = param_labels
+)
+p_ac <- p_ac +
+  scale_x_continuous(breaks = seq(-4, 4, 2), limits = c(-4.3, 4)) +
+  scale_y_continuous(breaks = seq(-8, 0, 2), limits = c(-8, 0))
+
+p_bc <- make_pair_panel(
+  dt = dt,
+  x = "b",
+  y = "c",
+  rho = rho_bc,
+  labels = param_labels
+)
+p_bc <- p_bc +
+  scale_y_continuous(breaks = seq(-8, 0, 2), limits = c(-8, 0))
+
+figure <- ggarrange(
+  p_ab, p_ac, p_bc,
+  ncol = 3,
+  nrow = 1
+)
 
 
 
 # Save figure --------------------------------------------------------------
 
-path_to_save <- file.path(getwd(), "outputs", "outputs_models")
+path_to_save <- file.path(getwd(), "outputs", "outputs_figures")
+
 ggsave(
-  plot = ranef,
+  plot = figure,
   filename = file.path(path_to_save, "figure3.png"),
   dpi = 500,
-  height = 6,
-  width = 12
+  height = 4.5,
+  width = 14
 )
-
 
 # ==========================================================================
 # ==========================================================================

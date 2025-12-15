@@ -138,7 +138,7 @@ figdat_long <- melt(
 )
 
 panel_names <- c(
-  a = "a: Asymptote (long-term hunting success)",
+  a = "a: Asymptote (maximum hunting success)",
   #b = "b: Baseline (initial hunting success)",
   c = "c: Rate (expertise acquisition)"
 )
@@ -149,7 +149,7 @@ figdat_long[
     levels = c("sd_predator_id__a_Intercept",
                #"sd_predator_id__b_Intercept",
                "sd_predator_id__c_Intercept"),
-    labels = c("Asymptote (a):\nlong-term hunting success",
+    labels = c("Asymptote (a):\nmaximum hunting success",
                #"Baseline (b):\ninitial hunting success",
                "Rate (c):\nexpertise acquisition")
   )
@@ -169,9 +169,12 @@ figdat_long[
 
 # Custom theme
 custom_theme <- theme(
-  axis.text = element_text(size = 15, color = "black"),
-  axis.title = element_text(size = 17),
+  axis.text = element_text(size = 14, color = "black"),
+  axis.title = element_text(size = 16),
   strip.text.x = element_text(size = 15),
+  axis.ticks.length = unit(.15, "cm"),
+  axis.ticks = element_line(linewidth = 0.90, color = "black"),
+  axis.line = element_line(linewidth = 0.95, color = "black"),
   panel.grid = element_blank(),
   panel.background = element_blank(),
   legend.title = element_text(size = 13),
@@ -191,7 +194,7 @@ fig <- p + geom_density_ridges(
   quantiles = 2,
   rel_min_height = 0.0009
 ) +
-  scale_x_continuous(breaks = seq(0, 1.5, 0.5), limits = c(0, 2)) +
+  scale_x_continuous(breaks = seq(0, 2, 0.5), limits = c(0, 2)) +
   scale_fill_manual(
     values = c("#e55c30", "#781c6d", "#140b34"),
     labels = c("Model II", "Model III", "Model IV")
@@ -212,7 +215,8 @@ ggsave(
   plot = fig,
   filename = file.path(path_to_save, "figure4.png"),
   dpi = 500,
-  width = 10
+  height = 6,
+  width = 8
 )
 
 # ==========================================================================

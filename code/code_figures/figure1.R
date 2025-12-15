@@ -55,6 +55,10 @@ data[, predator_id := as.factor(predator_id)]
 # Remove any NAs
 data <- data[complete.cases(data)]
 
+# Space rate within 0.2
+data <- data[prey_avg_space_rate <= 0.2]
+
+# Standardize traits
 standardize <- function(x) {
   (x - mean(x, na.rm = TRUE)) / sd(x, na.rm = TRUE)
 }
@@ -64,7 +68,7 @@ data[
   c("Zprey_speed", "Zgame_duration", "Zprey_avg_rank", "Zprey_space") := lapply(
     .SD, standardize
   ),
-  .SDcols = c("prey_avg_speed", "game_duration", "prey_avg_rank", "prey_avg_amount_tiles_visited")
+  .SDcols = c("prey_avg_speed", "game_duration", "prey_avg_rank", "prey_avg_space_rate")
 ]
 
 # ==========================================================================
@@ -151,10 +155,41 @@ custom_theme <- theme(
 
 
 
+# Compute group-level SD summaries for a, b, c ----------------------------
+
+compute_re_sd_summaries <- function(fit, prob = 0.89) {
+  alpha <- (1 - prob) / 2
+  q_lo  <- alpha
+  q_hi  <- 1 - alpha
+
+  vars <- c(
+    "sd_predator_id__a_Intercept",
+    "sd_predator_id__b_Intercept",
+    "sd_predator_id__c_Intercept"
+  )
+
+  sum_sd <- posterior_summary(fit, variable = vars, probs = c(q_lo, q_hi))
+
+  list(
+    sd_a = c(est = sum_sd["sd_predator_id__a_Intercept", "Estimate"],
+             lo  = sum_sd["sd_predator_id__a_Intercept", 3],
+             hi  = sum_sd["sd_predator_id__a_Intercept", 4]),
+    sd_b = c(est = sum_sd["sd_predator_id__b_Intercept", "Estimate"],
+             lo  = sum_sd["sd_predator_id__b_Intercept", 3],
+             hi  = sum_sd["sd_predator_id__b_Intercept", 4]),
+    sd_c = c(est = sum_sd["sd_predator_id__c_Intercept", "Estimate"],
+             lo  = sum_sd["sd_predator_id__c_Intercept", 3],
+             hi  = sum_sd["sd_predator_id__c_Intercept", 4]),
+    prob = prob
+  )
+}
+
+
+
 # Plot individual predator curves -----------------------------------------
 
-plot_individual_curves <- function(tab_re, title) {
-  ggplot(
+plot_individual_curves <- function(tab_re, title, re_sd = NULL) {
+  p <- ggplot(
     tab_re,
     aes(x = cumul_xp_pred, y = estimate__ / 4, color = predator_id)
   ) +
@@ -166,30 +201,62 @@ plot_individual_curves <- function(tab_re, title) {
     scale_x_continuous(breaks = seq(0, 500, 100), limits = c(0, 500)) +
     xlab("\nCumulative experience") +
     custom_theme
+
+  if (!is.null(re_sd)) {
+    # Put the text in the bottom-left to avoid covering curves
+    label_sd <- sprintf(
+      "RE SDs (predator):\nSD(b): %.2f [%.2f, %.2f]\nSD(a): %.2f [%.2f, %.2f]\nSD(c): %.2f [%.2f, %.2f]",
+      re_sd$sd_b["est"], re_sd$sd_b["lo"], re_sd$sd_b["hi"],
+      re_sd$sd_a["est"], re_sd$sd_a["lo"], re_sd$sd_a["hi"],
+      re_sd$sd_c["est"], re_sd$sd_c["lo"], re_sd$sd_c["hi"]
+    )
+
+    p <- p +
+      annotate(
+        "text",
+        x = 250,
+        y = 0.05,
+        hjust = 0,
+        vjust = 0,
+        label = label_sd,
+        size = 3.2,
+        color = "black"
+      )
+  }
 }
 
 
 
 # Compute baseline, asymptote, and rate ----------------------------------
 
-compute_param_summaries <- function(fit) {
-  sum_pars <- posterior_summary(
-    fit,
-    variable = c("b_a_Intercept", "b_b_Intercept", "b_c_Intercept")
-  )
+compute_param_summaries <- function(fit, prob = 0.89) {
+  alpha <- (1 - prob) / 2
+  q_lo  <- alpha
+  q_hi  <- 1 - alpha
 
-  a_hat <- sum_pars["b_a_Intercept", "Estimate"]
-  b_hat <- sum_pars["b_b_Intercept", "Estimate"]
-  c_hat <- sum_pars["b_c_Intercept", "Estimate"]
+  dr <- posterior::as_draws_df(fit)
 
-  baseline <- plogis(b_hat)
-  asymptote <- plogis(a_hat)
-  rate <- exp(c_hat)
+  a_draw <- dr$b_a_Intercept
+  b_draw <- dr$b_b_Intercept
+  c_draw <- dr$b_c_Intercept
+
+  baseline_draw  <- plogis(b_draw)
+  asymptote_draw <- plogis(a_draw)
+  rate_draw      <- exp(c_draw)
+
+  summ <- function(x) {
+    c(
+      est = median(x),
+      lo  = unname(stats::quantile(x, probs = q_lo)),
+      hi  = unname(stats::quantile(x, probs = q_hi))
+    )
+  }
 
   list(
-    baseline = baseline,
-    asymptote = asymptote,
-    rate = rate
+    baseline = summ(baseline_draw),
+    asymptote = summ(asymptote_draw),
+    rate = summ(rate_draw),
+    prob = prob
   )
 }
 
@@ -199,13 +266,11 @@ compute_param_summaries <- function(fit) {
 
 plot_global_curve <- function(tab_global, title, param_summ) {
   label_text <- sprintf(
-    "Baseline: %.2f\nMaximum: %.2f\nRate of gain: %.2f",
-    param_summ$baseline,
-    param_summ$asymptote,
-    param_summ$rate
+    "Population param. values:\nMedian(b): %.2f [%.2f, %.2f]\nMedian(a): %.2f [%.2f, %.2f]\nMedian(c): %.2f [%.2f, %.2f]",
+    param_summ$baseline["est"],  param_summ$baseline["lo"],  param_summ$baseline["hi"],
+    param_summ$asymptote["est"], param_summ$asymptote["lo"], param_summ$asymptote["hi"],
+    param_summ$rate["est"],      param_summ$rate["lo"],      param_summ$rate["hi"]
   )
-
-  x_min <- min(tab_global$cumul_xp_pred)
 
   ggplot(
     tab_global,
@@ -218,11 +283,12 @@ plot_global_curve <- function(tab_global, title, param_summ) {
     geom_line(linewidth = 1) +
     annotate(
       "text",
-      x = x_min,
-      y = 0.85,
+      x = 225,
+      y = 0.05,
       hjust = 0,
+      vjust = 0,
       label = label_text,
-      size = 3.5,
+      size = 3.2,
       color = "black"
     ) +
     ylab("Hunting success\n") +
@@ -232,8 +298,8 @@ plot_global_curve <- function(tab_global, title, param_summ) {
       limits = c(0, 1)
     ) +
     scale_x_continuous(
-      labels = seq(0, 500, 100),
-      limits = c(0, 500),
+      breaks = seq(0, 500, 100),
+      limits = c(0, 500)
     ) +
     xlab("\nCumulative experience") +
     custom_theme
@@ -253,6 +319,11 @@ plot_global_curve <- function(tab_global, title, param_summ) {
 # Extract total XP per predator
 xp <- unique(data[, .(predator_id, total_xp_pred)])
 
+re_sd3 <- compute_re_sd_summaries(mod3, prob = 0.89)
+re_sd4 <- compute_re_sd_summaries(mod4, prob = 0.89)
+re_sd2 <- compute_re_sd_summaries(mod2, prob = 0.89)
+
+
 
 # ---------------------------- Model 3 -------------------------------------
 
@@ -269,12 +340,13 @@ params3 <- compute_param_summaries(mod3)
 
 plot3_ind <- plot_individual_curves(
   tab_re = tab3_re,
-  title = " "
+  title = " ",
+  re_sd = re_sd3
 )
 
 plot3_glob <- plot_global_curve(
   tab_global = tab3_global,
-  title = "Model III: no prey behaviour",
+  title = "Model III: prey speed",
   param_summ = params3
 )
 
@@ -295,39 +367,41 @@ params4 <- compute_param_summaries(mod4)
 
 plot4_ind <- plot_individual_curves(
   tab_re = tab4_re,
-  title = " "
+  title = " ",
+  re_sd = re_sd4
 )
 
 plot4_glob <- plot_global_curve(
   tab_global = tab4_global,
-  title = "Model IV: prey speed",
+  title = "Model IV: prey speed + prey space",
   param_summ = params4
 )
 
 
 
-# ---------------------------- Model 5 -------------------------------------
+# ---------------------------- Model 2 -------------------------------------
 
-ce5 <- make_ce_tables(
-  fit = mod5,
+ce2 <- make_ce_tables(
+  fit = mod2,
   data = data,
   nsamples = 100
 )
 
-tab5_re <- cut_by_total_xp(ce5$tab_re, xp)
-tab5_global <- ce5$tab_global
+tab2_re <- cut_by_total_xp(ce2$tab_re, xp)
+tab2_global <- ce2$tab_global
 
-params5 <- compute_param_summaries(mod5)
+params2 <- compute_param_summaries(mod2)
 
-plot5_ind <- plot_individual_curves(
-  tab_re = tab5_re,
-  title = " "
+plot2_ind <- plot_individual_curves(
+  tab_re = tab2_re,
+  title = " ",
+  re_sd = re_sd2
 )
 
-plot5_glob <- plot_global_curve(
-  tab_global = tab5_global,
-  title = "Model V: prey speed + prey space",
-  param_summ = params5
+plot2_glob <- plot_global_curve(
+  tab_global = tab2_global,
+  title = "Model II: no prey behaviour",
+  param_summ = params2
 )
 
 # ==========================================================================
@@ -342,8 +416,8 @@ plot5_glob <- plot_global_curve(
 # ==========================================================================
 
 figure <- ggarrange(
-  NULL, plot3_glob, NULL, plot4_glob, NULL, plot5_glob,
-  NULL, plot3_ind,  NULL, plot4_ind,  NULL, plot5_ind,
+  NULL, plot2_glob, NULL, plot3_glob, NULL, plot4_glob,
+  NULL, plot2_ind,  NULL, plot3_ind,  NULL, plot4_ind,
   ncol = 6, nrow = 2,
   labels = c(
     "(A)", "", "(B)", "", "(C)", "",
@@ -370,3 +444,4 @@ ggsave(
   device   = grDevices::png,
   type     = "cairo-png"
 )
+figure
