@@ -33,12 +33,10 @@ if (!dir.exists(output_path)) dir.create(output_path, recursive = TRUE)
 model_files <- list(
   LM_PreySpeed = "LM-PreySpeed.rds",
   LM_PreySpace = "LM-PreySpace.rds",
-  GAMM_I = "GAMM-I.rds",
-  GAMM_II = "GAMM-II.rds",
-  GAMM_III = "GAMM-III.rds",
-  GAMM_IV = "GAMM-IV.rds",
-  GAMM_V = "GAMM-V.rds",
-  GAMM_VI = "GAMM-VI.rds"
+  asym_I = "asym-I.rds",
+  asym_II = "asym-II.rds",
+  asym_III = "asym-III.rds",
+  asym_IV = "asym-IV.rds"
 )
 
 if (!mod %in% names(model_files)) {
@@ -62,7 +60,13 @@ png_path <- file.path(output_path, paste0("checks_", mod, ".png"))
 trace_path <- file.path(output_path, paste0("trace_", mod, ".pdf"))
 
 if (!file.exists(file_path)) {
-  message(sprintf("Missing model file: %s\nPlease download it from OSF: %s", file_name, model_path))
+  message(
+    sprintf(
+      "Missing model file: %s\nPlease download it from OSF: %s",
+      file_name,
+      model_path
+    )
+  )
   quit(save = "no")
 }
 
@@ -71,7 +75,7 @@ model <- readRDS(file_path)
 
 # Generate trace plot if missing
 if (!file.exists(trace_path)) {
-  params <- grep("^(b_|phi|sd_|sds_|sigma)", parnames(model), value = TRUE)
+  params <- grep("^(b_|phi|sd_|sigma)", variables(model), value = TRUE)
   n_per_page <- 4
   n_pages <- ceiling(length(params) / n_per_page)
 
@@ -90,24 +94,30 @@ if (!file.exists(trace_path)) {
 if (!file.exists(png_path)) {
   custom_theme <- theme(legend.position = "bottom")
 
-  p1 <- pp_check(model, type="dens_overlay", ndraws=10) +
-    ggtitle(paste(mod, "- pp_check")) + 
+  p1 <- pp_check(model, type = "dens_overlay", ndraws = 10) +
+    ggtitle(paste(mod, "- pp_check")) +
     custom_theme
 
-  p2 <- pp_check(model, type="stat_2d", ndraws=100) +
-    ggtitle(paste(mod, "- stat_2d")) + 
+  p2 <- pp_check(model, type = "stat_2d", ndraws = 100) +
+    ggtitle(paste(mod, "- stat_2d")) +
     custom_theme
 
-  p3 <- pp_check(model, type="stat", stat="median", ndraws=100) +
-    ggtitle(paste(mod, "- median")) + 
+  p3 <- pp_check(model, type = "stat", stat = "median", ndraws = 100) +
+    ggtitle(paste(mod, "- median")) +
     custom_theme
 
-  p4 <- pp_check(model, type="error_scatter_avg") +
-    ggtitle(paste(mod, "- error_scatter")) + 
+  p4 <- pp_check(model, type = "error_scatter_avg", ndraws = 50) +
+    ggtitle(paste(mod, "- error_scatter")) +
     custom_theme
 
   combined_plot <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
-  ggsave(filename = png_path, plot = combined_plot, width = 14, height = 10, dpi = 300)
+  ggsave(
+    filename = png_path,
+    plot = combined_plot,
+    width = 14,
+    height = 10,
+    dpi = 300
+  )
 
   message("Saved diagnostic plot for ", mod, " to: ", png_path)
 } else {
