@@ -26,9 +26,9 @@ library(viridis)
 
 path_models <- file.path(getwd(), "outputs", "outputs_models")
 
-mod2 <- readRDS(file.path(path_models, "asym-II.rds")) # control for rank
-mod3 <- readRDS(file.path(path_models, "asym-III.rds")) # mod2 + Prey speed
-mod4 <- readRDS(file.path(path_models, "asym-IV.rds")) # mod2 + Prey speed + space
+mod2 <- readRDS(file.path(path_models, "asym-II.rds"))
+mod3 <- readRDS(file.path(path_models, "asym-III.rds"))
+mod4 <- readRDS(file.path(path_models, "asym-IV.rds"))
 
 
 
@@ -68,7 +68,12 @@ data[
   c("Zprey_speed", "Zgame_duration", "Zprey_avg_rank", "Zprey_space") := lapply(
     .SD, standardize
   ),
-  .SDcols = c("prey_avg_speed", "game_duration", "prey_avg_rank", "prey_avg_space_rate")
+  .SDcols = c(
+    "prey_avg_speed",
+    "game_duration",
+    "prey_avg_rank",
+    "prey_avg_space_rate"
+  )
 ]
 
 # ==========================================================================
@@ -171,15 +176,21 @@ compute_re_sd_summaries <- function(fit, prob = 0.89) {
   sum_sd <- posterior_summary(fit, variable = vars, probs = c(q_lo, q_hi))
 
   list(
-    sd_a = c(est = sum_sd["sd_predator_id__a_Intercept", "Estimate"],
-             lo  = sum_sd["sd_predator_id__a_Intercept", 3],
-             hi  = sum_sd["sd_predator_id__a_Intercept", 4]),
-    sd_b = c(est = sum_sd["sd_predator_id__b_Intercept", "Estimate"],
-             lo  = sum_sd["sd_predator_id__b_Intercept", 3],
-             hi  = sum_sd["sd_predator_id__b_Intercept", 4]),
-    sd_c = c(est = sum_sd["sd_predator_id__c_Intercept", "Estimate"],
-             lo  = sum_sd["sd_predator_id__c_Intercept", 3],
-             hi  = sum_sd["sd_predator_id__c_Intercept", 4]),
+    sd_a = c(
+      est = sum_sd["sd_predator_id__a_Intercept", "Estimate"],
+      lo = sum_sd["sd_predator_id__a_Intercept", 3],
+      hi = sum_sd["sd_predator_id__a_Intercept", 4]
+    ),
+    sd_b = c(
+      est = sum_sd["sd_predator_id__b_Intercept", "Estimate"],
+      lo = sum_sd["sd_predator_id__b_Intercept", 3],
+      hi = sum_sd["sd_predator_id__b_Intercept", 4]
+    ),
+    sd_c = c(
+      est = sum_sd["sd_predator_id__c_Intercept", "Estimate"],
+      lo = sum_sd["sd_predator_id__c_Intercept", 3],
+      hi = sum_sd["sd_predator_id__c_Intercept", 4]
+    ),
     prob = prob
   )
 }
@@ -203,14 +214,19 @@ plot_individual_curves <- function(tab_re, title, re_sd = NULL) {
     custom_theme
 
   if (!is.null(re_sd)) {
-    # Put the text in the bottom-left to avoid covering curves
     label_sd <- sprintf(
       "RE SDs (predator):\nSD(b): %.2f [%.2f, %.2f]\nSD(a): %.2f [%.2f, %.2f]\nSD(c): %.2f [%.2f, %.2f]",
-      re_sd$sd_b["est"], re_sd$sd_b["lo"], re_sd$sd_b["hi"],
-      re_sd$sd_a["est"], re_sd$sd_a["lo"], re_sd$sd_a["hi"],
-      re_sd$sd_c["est"], re_sd$sd_c["lo"], re_sd$sd_c["hi"]
+      re_sd$sd_b["est"],
+      re_sd$sd_b["lo"],
+      re_sd$sd_b["hi"],
+      re_sd$sd_a["est"],
+      re_sd$sd_a["lo"],
+      re_sd$sd_a["hi"],
+      re_sd$sd_c["est"],
+      re_sd$sd_c["lo"],
+      re_sd$sd_c["hi"]
     )
-
+    # Put the text in the bottom-right to avoid covering curves
     p <- p +
       annotate(
         "text",
@@ -267,9 +283,15 @@ compute_param_summaries <- function(fit, prob = 0.89) {
 plot_global_curve <- function(tab_global, title, param_summ) {
   label_text <- sprintf(
     "Population param. values:\nMedian(b): %.2f [%.2f, %.2f]\nMedian(a): %.2f [%.2f, %.2f]\nMedian(c): %.2f [%.2f, %.2f]",
-    param_summ$baseline["est"],  param_summ$baseline["lo"],  param_summ$baseline["hi"],
-    param_summ$asymptote["est"], param_summ$asymptote["lo"], param_summ$asymptote["hi"],
-    param_summ$rate["est"],      param_summ$rate["lo"],      param_summ$rate["hi"]
+    param_summ$baseline["est"],
+    param_summ$baseline["lo"],
+    param_summ$baseline["hi"],
+    param_summ$asymptote["est"],
+    param_summ$asymptote["lo"],
+    param_summ$asymptote["hi"],
+    param_summ$rate["est"],
+    param_summ$rate["lo"],
+    param_summ$rate["hi"]
   )
 
   ggplot(
@@ -437,11 +459,11 @@ path_fig <- file.path(getwd(), "outputs", "outputs_figures")
 
 ggsave(
   filename = file.path(path_fig, "figure1.png"),
-  plot     = figure,
-  width    = 4000 / 300,
-  height   = 2200 / 300,
-  dpi      = 300,
-  device   = grDevices::png,
-  type     = "cairo-png"
+  plot = figure,
+  width = 4000 / 300,
+  height = 2200 / 300,
+  dpi = 300,
+  device = grDevices::png,
+  type = "cairo-png"
 )
 figure
