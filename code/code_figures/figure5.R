@@ -2,7 +2,7 @@
 
 #                          Plot regression models
 #                         of prey speed and space
-#                                Figure S2
+#                                Figure 5
 
 # ==========================================================================
 
@@ -245,7 +245,7 @@ path <- file.path(getwd(), "outputs", "outputs_figures")
 
 ggsave(
   figure,
-  filename = file.path(path, "figureS2.png"),
+  filename = file.path(path, "figure5.png"),
   units = "in",
   dpi = 300,
   width = 10,
