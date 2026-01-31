@@ -2,8 +2,9 @@
 
 #                   Asymptotic model - Hunting success
 #                               Model III
+#               - Game duration as fixed effect of hunting success
 #               - rank as fixed effect of hunting success
-#               - prey speed as fixed effect of a and c
+#               - prey speed and space as fixed effects of a and c
 
 # ==========================================================================
 
@@ -32,7 +33,7 @@ library(parallel)
 # Load data ----------------------------------------------------------------
 
 # Folder path Compute Canada
-folder <- file.path("/home", "maxime11", "projects", "def-monti", 
+folder <- file.path("/home", "maxime11", "projects", "def-monti",
                     "maxime11", "phd_project", "data")
 
 # Load data on compute canada
@@ -66,10 +67,14 @@ standardize <- function(x) {
 
 data[
   ,
-  c("Zprey_speed", "Zgame_duration", "Zprey_avg_rank") := lapply(
+  c("Zprey_speed", "Zprey_space", "Zgame_duration",
+    "Zprey_avg_rank") := lapply(
     .SD, standardize
   ),
-  .SDcols = c("prey_avg_speed", "game_duration", "prey_avg_rank")
+  .SDcols = c(
+    "prey_avg_speed", "prey_avg_space_rate",
+    "game_duration", "prey_avg_rank"
+  )
 ]
 
 # ==========================================================================
@@ -93,9 +98,9 @@ model_formula <- brmsformula(
       betaduration * Zgame_duration +
       betarank * Zprey_avg_rank,
 
-  a ~ 1 + Zprey_speed + (1 | p | predator_id),
+  a ~ 1 + Zprey_speed + Zprey_space + (1 | p | predator_id),
   b ~ 1 + (1 | p | predator_id),
-  c ~ 1 + Zprey_speed + (1 | p | predator_id),
+  c ~ 1 + Zprey_speed + Zprey_space + (1 | p | predator_id),
 
   betaduration ~ 1,
   betarank ~ 1,
@@ -130,6 +135,8 @@ priors <- c(
   # Fixed effects on a, c
   prior(normal(-0.3, 0.3), nlpar = "c", class = "b", coef = "Zprey_speed"),
   prior(normal(-0.3, 0.3), nlpar = "a", class = "b", coef = "Zprey_speed"),
+  prior(normal(-0.3, 0.3), nlpar = "c", class = "b", coef = "Zprey_space"),
+  prior(normal(-0.3, 0.3), nlpar = "a", class = "b", coef = "Zprey_space"),
 
   # Random effects on a, b, c
   prior(normal(0, 1), nlpar = "a", class = "sd"),

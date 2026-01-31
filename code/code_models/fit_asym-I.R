@@ -1,7 +1,9 @@
 # ==========================================================================
 
 #                   Asymptotic model - Hunting success
-#                                Model I
+#                               Model I
+#               - Game duration as fixed effect of hunting success
+#               - rank as fixed effect of hunting success
 
 # ==========================================================================
 
@@ -55,6 +57,7 @@ data <- data[complete.cases(data)]
 data <- data[prey_avg_space_rate <= 0.2]
 
 
+
 # Standardise the variables (Z-scores) -------------------------------------
 
 standardize <- function(x) {
@@ -63,10 +66,10 @@ standardize <- function(x) {
 
 data[
   ,
-  c("Zprey_speed", "Zgame_duration") := lapply(
+  c("Zprey_speed", "Zgame_duration", "Zprey_avg_rank") := lapply(
     .SD, standardize
   ),
-  .SDcols = c("prey_avg_speed", "game_duration")
+  .SDcols = c("prey_avg_speed", "game_duration", "prey_avg_rank")
 ]
 
 # ==========================================================================
@@ -87,13 +90,15 @@ data[
 model_formula <- brmsformula(
   hunting_success | trials(4) ~
     a - (a - b) * exp(-exp(c) * cumul_xp_pred) +
-      betaduration * Zgame_duration,
+      betaduration * Zgame_duration +
+      betarank * Zprey_avg_rank,
 
-  a ~ 1 + (1 | p | predator_id), # (on logit scale)
-  b ~ 1 + (1 | p | predator_id), # (on logit scale)
-  c ~ 1 + (1 | p | predator_id), # predator-specific rate
+  a ~ 1 + (1 | p | predator_id),
+  b ~ 1 + (1 | p | predator_id),
+  c ~ 1 + (1 | p | predator_id),
 
   betaduration ~ 1,
+  betarank ~ 1,
 
   nl = TRUE
 )
@@ -129,6 +134,7 @@ priors <- c(
 
   # Covariates on hunting success
   prior(normal(0, 0.5), nlpar = "betaduration", class = "b"),
+  prior(normal(0, 0.5), nlpar = "betarank", class = "b"),
 
   # Prior on correlation matrix of random effects
   prior(lkj(2), class = "cor"),

@@ -1,9 +1,7 @@
 # ==========================================================================
 
 #                   Asymptotic model - Hunting success
-#                               Model IV
-#               - rank as fixed effect of hunting success
-#               - prey speed and space as fixed effects of a and c
+#                                Model Baseline
 
 # ==========================================================================
 
@@ -32,7 +30,7 @@ library(parallel)
 # Load data ----------------------------------------------------------------
 
 # Folder path Compute Canada
-folder <- file.path("/home", "maxime11", "projects", "def-monti",
+folder <- file.path("/home", "maxime11", "projects", "def-monti", 
                     "maxime11", "phd_project", "data")
 
 # Load data on compute canada
@@ -57,7 +55,6 @@ data <- data[complete.cases(data)]
 data <- data[prey_avg_space_rate <= 0.2]
 
 
-
 # Standardise the variables (Z-scores) -------------------------------------
 
 standardize <- function(x) {
@@ -66,14 +63,10 @@ standardize <- function(x) {
 
 data[
   ,
-  c("Zprey_speed", "Zprey_space", "Zgame_duration",
-    "Zprey_avg_rank") := lapply(
+  c("Zprey_speed", "Zgame_duration") := lapply(
     .SD, standardize
   ),
-  .SDcols = c(
-    "prey_avg_speed", "prey_avg_space_rate",
-    "game_duration", "prey_avg_rank"
-  )
+  .SDcols = c("prey_avg_speed", "game_duration")
 ]
 
 # ==========================================================================
@@ -94,15 +87,13 @@ data[
 model_formula <- brmsformula(
   hunting_success | trials(4) ~
     a - (a - b) * exp(-exp(c) * cumul_xp_pred) +
-      betaduration * Zgame_duration +
-      betarank * Zprey_avg_rank,
+      betaduration * Zgame_duration,
 
-  a ~ 1 + Zprey_speed + Zprey_space + (1 | p | predator_id),
-  b ~ 1 + (1 | p | predator_id),
-  c ~ 1 + Zprey_speed + Zprey_space + (1 | p | predator_id),
+  a ~ 1 + (1 | p | predator_id), # (on logit scale)
+  b ~ 1 + (1 | p | predator_id), # (on logit scale)
+  c ~ 1 + (1 | p | predator_id), # predator-specific rate
 
   betaduration ~ 1,
-  betarank ~ 1,
 
   nl = TRUE
 )
@@ -131,20 +122,13 @@ priors <- c(
   prior(normal(-1.098612, 0.7), nlpar = "b", class = "b", coef = "Intercept"),
   prior(normal(-5.5, 1), nlpar = "c", class = "b", coef = "Intercept"),
 
-  # Fixed effects on a, c
-  prior(normal(-0.3, 0.3), nlpar = "c", class = "b", coef = "Zprey_speed"),
-  prior(normal(-0.3, 0.3), nlpar = "a", class = "b", coef = "Zprey_speed"),
-  prior(normal(-0.3, 0.3), nlpar = "c", class = "b", coef = "Zprey_space"),
-  prior(normal(-0.3, 0.3), nlpar = "a", class = "b", coef = "Zprey_space"),
-
   # Random effects on a, b, c
   prior(normal(0, 1), nlpar = "a", class = "sd"),
   prior(normal(0, 1), nlpar = "b", class = "sd"),
   prior(normal(0, 1), nlpar = "c", class = "sd"),
 
   # Covariates on hunting success
-  prior(normal(1, 0.5), nlpar = "betaduration", class = "b"),
-  prior(normal(0.5, 0.5), nlpar = "betarank", class = "b"),
+  prior(normal(0, 0.5), nlpar = "betaduration", class = "b"),
 
   # Prior on correlation matrix of random effects
   prior(lkj(2), class = "cor"),
@@ -167,8 +151,8 @@ priors <- c(
 fit <- brm(
   formula = model_formula,
   family = beta_binomial(),
-  warmup = 2500,
-  iter = 10500,
+  warmup = 1500,
+  iter = 7500,
   thin = 2,
   chains = 4,
   threads = threading(8),
@@ -181,7 +165,7 @@ fit <- brm(
   data = data
 )
 
-saveRDS(fit, file = "asym-IV.rds")
+saveRDS(fit, file = "asym-baseline.rds")
 
 # ==========================================================================
 # ==========================================================================
