@@ -77,7 +77,7 @@ Prey respond to predators by using antipredator tactics such as camouflage to av
 
 A recurring challenge impeding research on predator-prey behavioural interactions is the need to collect data simultaneously on both the predator and the prey over successive interactions. Here we mitigate these challenges by using *Dead by Daylight* as our study system, a videogame where four prey players must forage for resources while avoiding predation by a fifth player. *Dead by Daylight* allows us to test ecological hypotheses by providing controlled virtual environments where interactions among thousands of individuals are captured in real time [see @montiglio.etal2025 for a review]. In this game, the predator population comprises individuals that either ambush or hunt at high speeds (i.e., mean movement speed along an ambush-cursorial continuum of tactics), and their success is driven by the movement of the prey [@fraserfranco.etal2022]. The prey can increase their chances of survival by cooperating and moving fast to escape the predator [@cere.etal2021;@fraserfranco.etal2022;@santostefano.etal2024]. Moreover, individuals in *Dead by Daylight* and other virtual systems display realistic behaviours in response to the fear of predation, such as freezing (M.F.F., personal observations), hiding [@santostefano.etal2024], or increased vigilance [@beauchamp2020]. These observations outline how ecological phenomena can emerge from human interactions in virtual systems with fixed rules [@brosnan.etal2017;@kasumovic.etal2017]. Videogames also generate large volumes of data on thousands of interacting players throughout their lifetime in the game under realistic, controlled, and repeatable ecological scenarios. Hence, *Dead by Daylight* allows us to tackle fundamental questions about the role of antipredator behaviour and experience in predator-prey interactions.
 
-In this study, we assess how predator expertise emerges over repeated encounters with prey using data from players in *Dead by Daylight*. We quantify expertise acquisition as the relationship between hunting success (i.e., prey capture) and repeated experience (i.e., cumulated matches). Predators should display a monotonic increase in hunting success over time up to some point at which it will stabilize [@dukas2019]. Prey with more skill should have improved antipredator behaviour, and we expect that prey with greater predator-avoidance skills will move at faster speeds and cover more space in the virtual environment. Thus, we hypothesize that prey movement behavior will influence predator expertise acquisition, by modulating the rate of gain in expertise as well as the maximum hunting success. This should result in differences among individuals in the rate at which they acquire expertise as well as in their maximal hunting success. We predict that predators that encountered faster prey will have a lower rate of acquisition and a reduced maximum hunting success.
+In this study, we assess how predator expertise emerges over repeated encounters with prey using data from players in *Dead by Daylight*. We quantify expertise acquisition as the relationship between hunting success (i.e., prey capture) and repeated experience (i.e., cumulated matches). Predators should display a monotonic increase in hunting success over time up to some point at which it will stabilize [@dukas2019]. Prey with more skill should have improved antipredator behaviour, and we expect that prey with greater predator-avoidance skills will move at faster speeds and cover more space in the virtual environment. Thus, we hypothesize that prey movement behavior will influence predator expertise acquisition. This should result in differences among individuals in the rate at which they acquire expertise as well as in their maximum hunting success. We predict that predators that encountered faster prey will have a lower rate of acquisition and a reduced maximum hunting success.
 
 
 
@@ -112,7 +112,7 @@ $$
 
 where $y_i$ is the number of prey captured out of $n_i$ prey available (four), $\mu_i$ is the expected probability of hunting success for observation $i$, and $\phi$ is the precision parameter controlling overdispersion
 
-To test the hypothesis that prey behaviour shaped the acquisition of predator expertise, we fitted five different models (Table 1) that predicted the expected probability of capturing the four prey $\mu_i$. All models followed the same basic structure defined as:
+To test the hypothesis that prey behaviour shaped the acquisition of predator expertise, we fitted three different models (Table 1) that predicted the expected probability of capturing the four prey $\mu_i$. All models followed the same basic structure defined as:
 
 $$
 \text{logit}(\mu_i) = a_j - (a_j - b_j) \times \exp(-\exp(c_j) \times x_i) + \mathbf{Z}_i^T \boldsymbol{\beta}
@@ -144,30 +144,21 @@ This covariance structure allowed us to estimate correlations among individual d
 
 # Create model summary table
 model_summary <- data.frame(
-  model = c("I", "II", "III", "IV", "V", "VI"),
+  model = c("I", "II", "III"),
   covariates_y = c(
-    "game duration",
     "game duration, prey rank",
     "game duration, prey rank",
-    "game duration, prey rank, prey speed",
-    "game duration, prey rank, prey speed",
-    "game duration, prey rank, prey speed, prey space coverage"
+    "game duration, prey rank"
   ),
   covariates_asym = c(
     "—",
-    "—",
-    "—",
-    "—",
-    "—",
-    "—"
+    "prey speed",
+    "prey speed, prey space covered"
   ),
   hypothesis = c(
-    "Baseline expertise acquisition model with no prey covariates",
-    "Prey skill (rank) affects hunting success; includes population-level expertise trend",
-    "Prey skill (rank) affects hunting success; individual-level expertise only",
-    "Prey skill and movement speed affect hunting success; individual-level expertise only",
-    "Prey skill and movement speed affect hunting success; includes population-level expertise trend",
-    "All prey characteristics affect hunting success; includes population-level expertise trend"
+    "The predator population acquires expertise up to an optimum",
+    "Prey speed affects population and individual-level expertise acquisition",
+    "Prey speed and space coverage affects population and individual-level expertise acquisition"
   ),
   stringsAsFactors = FALSE
 )
@@ -185,12 +176,12 @@ model_table <- model_summary %>%
   autofit() %>%
   align(align = "left", part = "all") %>%
   set_caption(
-    caption = "Table 1. Summary of the six generalized asymptotic mixed models (GAMMs) fitted to test how prey behaviour shapes predator expertise acquisition. All models include predator identity as a random effect on the asymptotic parameters (a, b, c). Models with population-level expertise trends include a global smoother for cumulative experience.",
+    caption = "Table 1. Summary of the three generalized asymptotic mixed models fitted to test how prey behaviour shapes predator expertise acquisition. All models fit a population-level expertise trend and include a predator identity random effect on the asymptotic parameters (a, b, c).",
     style = "Table Caption"
   ) %>%
   font(fontname = "Times New Roman", part = "all") %>%
   fontsize(size = 10, part = "all") %>%
-  width(j = 1, width = 0.5) %>%
+  width(j = 1, width = 0.8) %>%
   width(j = 2, width = 1.5) %>%
   width(j = 3, width = 1.2) %>%
   width(j = 4, width = 3.5)
@@ -199,21 +190,24 @@ model_table
 
 ```
 
-We defined weakly informative Gaussian priors for the intercept ($N(0,\ 0.5^{2})$) and the global trend of cumulative experience ($N(0,\ 2^{2}))$). Following @fraserfranco.etal2022, we defined a positive Gaussian prior ($N(1,\ 0.5^{2}))$) for the slope of the game duration, a Gaussian prior ($N(0,\ 1^{2}))$) for the slope of the prey rank, and negative Gaussian priors on prey speed and space coverage ($N(-1,\ 0.5^{2})$). We defined a positive Gaussian prior on the precision parameter ($N(2,\ 0.5^{2})$). We employed weakly informative half-Gaussian priors on all the standard deviation parameters ($N(0,\ 0.5^{2})$).
+We defined informative priors for the asymptotic parameter's intercepts to reflect biologically meaningful expectations. We centered the upper asymptote (a) at 1.39 (logit scale, corresponding to 80% success rate) with SD = 0.7, while the initial value (b) was centered at -1.10 (25% success rate) with SD = 0.7. We set a Normal(-5.5, 1) prior on the learning rate parameter (c), constraining it to plausible rates of improvement over the observed experience range. We used mildly informative priors for most effect sizes and variance components. The effects of prey speed and space use on parameters a and c received Normal(-0.3, 0.3) priors, reflecting a weak expectation of negative effects. Similarly, we applied a Normal(1, 0.5) prior on the game duration and a Normal(0.5, 0.5) on the prey rank. Lastly, we applied a half-normal prior (0, 1) on the random effect standard deviation parameters, an LKJ(2) prior on the correlation matrix, and a Normal(log(2), 0.5) prior on the shape parameter.
 
-We compared the predictive accuracy of all six models using approximate leave-one-out cross-validation with Pareto-smoothed importance sampling [@vehtari.etal2017;@piironen.vehtari2017;@vehtari.etal2022].
 
-To test the hypothesis that prey speed and space coverage increases with prey skill, we fitted Bayesian linear regression models estimating the relationship between 1) prey speed and the standardized prey rank and 2) prey space coverage and the standardized prey rank. In both models, we controlled for the game duration, using it as a linear covariate, and included the predator identity as a random effect. We used weakly informative Gaussian priors on the slopes of the game duration ($N(0,\ 0.5^{2})$) and weakly informative negative Gaussian priors on the slopes of the prey rank ($N(-0.5,\ 1^{2})$) because prey of greater skill (i.e., rank 1 is the highest skill) should move faster and cover more space in the environment. Lastly, we used weakly informative Gaussian priors on the intercepts of prey speed ($N(2,\ 0.5^{2})$) and rate of space coverage ($N(15,\ 0.5^{2})$) as we assumed that prey should move at around two meters per second and cover at least 15 tiles in the virtual environment. Lastly, we employed half-Gaussian priors on the standard deviation parameters ($N(0,\ 0.5^{2})$) in both models.
+We tested the hypothesis that antipredator behaviour impairs the acquisition of predator expertise at the population level by comparing the mean asymptotic parameter values describing the global trends of each model (Figure 1). This allowed us evaluate if prey behaviour affected the acquisition of expertise at the population level. At the individual level, we tested the hypothesis that antipredator behaviour generates differences among predators in expertise acquisition by 1) assessing the relationship between the parameter values of a, b, and c, and prey behaviour, and 2) by comparing the individual-level standard deviation parameters of a, b, and c. Specifically, we compared the posterior distributions of standard deviations for the random intercepts (i.e., mean differences among predators) among the three models for parameters a, b, and c (Figure 4). We used approximate leave-one-out cross-validation with Pareto-smoothed importance sampling to determine which model was best at predicting the data [@vehtari.etal2017;@piironen.vehtari2017;@vehtari.etal2022].
+
+
+### Model specification: prey antipredator behaviour
+
+To test the hypothesis that prey speed and space coverage increases with prey skill, we fitted Bayesian linear regression models estimating the relationship between 1) prey speed and the standardized prey rank and 2) prey space coverage and the standardized prey rank. In both models, we controlled for the game duration, using it as a linear covariate, and included the predator identity as a random effect. 
+
+We used weakly informative Gaussian priors on the slopes of the game duration ($N(0,\ 0.5^{2})$) and weakly informative negative Gaussian priors on the slopes of the prey rank ($N(-0.5,\ 1^{2})$) because prey of greater skill (i.e., rank 1 is the highest skill) should move faster and cover more space in the environment. Lastly, we used weakly informative Gaussian priors on the intercepts of prey speed ($N(2,\ 0.5^{2})$) and rate of space coverage ($N(15,\ 0.5^{2})$) as we assumed that prey should move at around two meters per second and cover at least 15 tiles in the virtual environment. Lastly, we employed half-Gaussian priors on the standard deviation parameters ($N(0,\ 0.5^{2})$) in both models.
+
 
 ### Parameter sampling settings
 
-We parametrised the GAMMs to run four chains of 1500 iterations each, discarding the first 500 iterations of each chain as warm-up, and sampling one parameter value per iteration thereafter. Similarly, the linear models ran four chains of 1500 iterations each, sampling a parameter value at every iteration, and discarding the first 500 iterations. We thus obtained 4000 posterior samples per parameter in each model. We assessed the convergence of the chains using trace plots, R-hat diagnostics with a threshold set between 1.00 and 1.02, and effective sample sizes (ESS) with a threshold of >100 [@vehtari.etal2021]. We also performed posterior predictive checks, which showed an adequate fit of the models.
+We parametrised asymptotic model I to run four chains of 7,500 iterations each, discarding the first 1,500 iterations of each chain as warm-up, and sampling one parameter value per two iterations thereafter. We applied the same procedure for models II and III, but using 10,500 iterations and discarding the first 2,500 iterations of each chain as warm-up. All three models yielded 16,000 posterior samples per parameter. Similarly, the linear models ran four chains of 1500 iterations each, sampling a parameter value at every iteration, and discarding the first 500 iterations. We thus obtained 4000 posterior samples per parameter in each model. We assessed the convergence of the chains using trace plots, R-hat diagnostics with a threshold set between 1.00 and 1.02, and effective sample sizes (ESS) with a threshold of >100 [@vehtari.etal2021]. We also performed posterior predictive checks, which showed an adequate fit of the models.
 
-We fitted all models on a remote computer cluster (https://docs.alliancecan.ca/wiki/Cedar) using R (version 4.4.0). Model fitting was performed via Hamiltonian Monte Carlo (HMC) sampling with the "brms" package version 2.22.12 [@burkner2017], an R front-end for the STAN software [@StanDevelopmentTeam2023]. We used "cmdstanr" version 0.9.0 [@gabry.cesnovar2021] as the computational back-end for parameter estimation, with CmdStan installation version 2.36.0. We provide a detailed workflow for reproducing our results in the following GitHub repository (https://github.com/quantitative-ecologist/predator-expertise).
-
-### Hypothesis testing
-
-We tested the hypothesis that antipredator behaviour impairs the acquisition of predator expertise at the population level by comparing the global trends of model I (only controlling for game duration), model II (controlling for game duration and prey rank), model V (controlling for game duration, prey rank, and prey speed), and model VI (controlling for game duration, prey rank, prey speed, and prey space coverage) using the finite differences method (Figure 1). This allowed us to locate the point at which hunting success was optimized. At the individual level, we tested the hypothesis that antipredator behaviour generates differences among predators in expertise acquisition by comparing the individual-level variance parameters. Specifically, we compared the posterior distributions of standard deviations for 1) the random intercepts (i.e., mean differences in hunting success), 2) the random slopes (i.e., linear component relating hunting success with experience), and 3) the curve wiggliness (i.e., nonlinear component relating hunting success with experience).
+We fitted all models on Fir, a remote computer cluster (https://docs.alliancecan.ca/wiki/Fir) hosted by the Digital Research Alliance of Canada, using R (version 4.4.0). Model fitting was performed via Hamiltonian Monte Carlo (HMC) sampling with the "brms" package version 2.22.12 [@burkner2017], an R front-end for the STAN software [@StanDevelopmentTeam2023]. We used "cmdstanr" version 0.9.0 [@gabry.cesnovar2021] as the computational back-end for parameter estimation, with CmdStan installation version 2.36.0. We provide a detailed workflow for reproducing our results in the following GitHub repository (https://github.com/quantitative-ecologist/predator-expertise).
 
 
 
@@ -222,24 +216,18 @@ We tested the hypothesis that antipredator behaviour impairs the acquisition of 
 
 ```{r summary, cache = TRUE}
 # Import top 3 model fits
-fit1 <- readRDS(here::here("outputs", "outputs_models", "asym-I.rds"))
 fit2 <- readRDS(here::here("outputs", "outputs_models", "asym-II.rds"))
 fit3 <- readRDS(here::here("outputs", "outputs_models", "asym-III.rds"))
 fit4 <- readRDS(here::here("outputs", "outputs_models", "asym-IV.rds"))
-fit5 <- readRDS(here::here("outputs", "outputs_models", "asym-V.rds"))
 
 sum1 <- summary(fit1, robust = TRUE)$splines
 sum2 <- summary(fit2, robust = TRUE)$splines
 sum3 <- summary(fit3, robust = TRUE)$splines
-sum4 <- summary(fit4, robust = TRUE)$splines
-sum5 <- summary(fit5, robust = TRUE)$splines
 
 # Clear memory
-rm(fit1)
 rm(fit2)
 rm(fit3)
 rm(fit4)
-rm(fit5)
 ```
 
 ## Acquisition of expertise at the population level
