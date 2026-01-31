@@ -26,9 +26,9 @@ library(ggridges)
 
 path <- file.path(getwd(), "outputs", "outputs_models")
 
+fit1 <- readRDS(file.path(path, "asym-I.rds"))
 fit2 <- readRDS(file.path(path, "asym-II.rds"))
 fit3 <- readRDS(file.path(path, "asym-III.rds"))
-fit4 <- readRDS(file.path(path, "asym-IV.rds"))
 
 # ==========================================================================
 # ==========================================================================
@@ -59,7 +59,7 @@ variables <- c(
   "sd_predator_id__c_Intercept"
 )
 
-models <- list(fit2, fit3, fit4)
+models <- list(fit1, fit2, fit3)
 
 posterior_results <- list()
 
@@ -71,9 +71,9 @@ for (i in seq_along(models)) {
 }
 
 # Clear memory
+rm(fit1)
 rm(fit2)
 rm(fit3)
-rm(fit4)
 
 # Combine posterior draws
 figdat <- rbind(
@@ -83,7 +83,7 @@ figdat <- rbind(
 )
 
 # Add model name
-figdat[, model := c(rep("fit2", 12000), rep("fit3", 16000), rep("fit4", 16000))]
+figdat[, model := c(rep("fit1", 12000), rep("fit2", 16000), rep("fit3", 16000))]
 
 # ==========================================================================
 # ==========================================================================
@@ -197,7 +197,7 @@ fig <- p + geom_density_ridges(
   scale_x_continuous(breaks = seq(0, 2, 0.5), limits = c(0, 2)) +
   scale_fill_manual(
     values = c("#e55c30", "#781c6d", "#140b34"),
-    labels = c("Model II", "Model III", "Model IV")
+    labels = c("Model I", "Model II", "Model III")
   ) +
   labs(fill = " ") +
   ylab("") +

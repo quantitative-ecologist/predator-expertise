@@ -26,9 +26,9 @@ library(viridis)
 
 path_models <- file.path(getwd(), "outputs", "outputs_models")
 
+mod1 <- readRDS(file.path(path_models, "asym-I.rds"))
 mod2 <- readRDS(file.path(path_models, "asym-II.rds"))
 mod3 <- readRDS(file.path(path_models, "asym-III.rds"))
-mod4 <- readRDS(file.path(path_models, "asym-IV.rds"))
 
 
 
@@ -335,68 +335,41 @@ plot_global_curve <- function(tab_global, title, param_summ) {
 
 
 # ==========================================================================
-# 3. Prepare conditional effects for models 3, 4, 5
+# 3. Prepare conditional effects for models 1, 2, 3
 # ==========================================================================
 
 # Extract total XP per predator
 xp <- unique(data[, .(predator_id, total_xp_pred)])
 
-re_sd3 <- compute_re_sd_summaries(mod3, prob = 0.89)
-re_sd4 <- compute_re_sd_summaries(mod4, prob = 0.89)
+re_sd1 <- compute_re_sd_summaries(mod1, prob = 0.89)
 re_sd2 <- compute_re_sd_summaries(mod2, prob = 0.89)
+re_sd3 <- compute_re_sd_summaries(mod3, prob = 0.89)
 
 
 
-# ---------------------------- Model 3 -------------------------------------
+# ---------------------------- Model 1 -------------------------------------
 
-ce3 <- make_ce_tables(
-  fit = mod3,
+ce1 <- make_ce_tables(
+  fit = mod1,
   data = data,
   nsamples = 100
 )
 
-tab3_re <- cut_by_total_xp(ce3$tab_re, xp)
-tab3_global <- ce3$tab_global
+tab1_re <- cut_by_total_xp(ce1$tab_re, xp)
+tab1_global <- ce1$tab_global
 
-params3 <- compute_param_summaries(mod3)
+params1 <- compute_param_summaries(mod1)
 
-plot3_ind <- plot_individual_curves(
-  tab_re = tab3_re,
+plot1_ind <- plot_individual_curves(
+  tab_re = tab1_re,
   title = " ",
-  re_sd = re_sd3
+  re_sd = re_sd1
 )
 
-plot3_glob <- plot_global_curve(
-  tab_global = tab3_global,
-  title = "Model III: prey speed",
-  param_summ = params3
-)
-
-
-
-# ---------------------------- Model 4 -------------------------------------
-
-ce4 <- make_ce_tables(
-  fit = mod4,
-  data = data,
-  nsamples = 100
-)
-
-tab4_re <- cut_by_total_xp(ce4$tab_re, xp)
-tab4_global <- ce4$tab_global
-
-params4 <- compute_param_summaries(mod4)
-
-plot4_ind <- plot_individual_curves(
-  tab_re = tab4_re,
-  title = " ",
-  re_sd = re_sd4
-)
-
-plot4_glob <- plot_global_curve(
-  tab_global = tab4_global,
-  title = "Model IV: prey speed + prey space",
-  param_summ = params4
+plot1_glob <- plot_global_curve(
+  tab_global = tab1_global,
+  title = "Model I: no prey behaviour",
+  param_summ = params1
 )
 
 
@@ -422,8 +395,35 @@ plot2_ind <- plot_individual_curves(
 
 plot2_glob <- plot_global_curve(
   tab_global = tab2_global,
-  title = "Model II: no prey behaviour",
+  title = "Model II: prey speed",
   param_summ = params2
+)
+
+
+
+# ---------------------------- Model 3 -------------------------------------
+
+ce3 <- make_ce_tables(
+  fit = mod3,
+  data = data,
+  nsamples = 100
+)
+
+tab3_re <- cut_by_total_xp(ce3$tab_re, xp)
+tab3_global <- ce3$tab_global
+
+params3 <- compute_param_summaries(mod3)
+
+plot3_ind <- plot_individual_curves(
+  tab_re = tab3_re,
+  title = " ",
+  re_sd = re_sd3
+)
+
+plot3_glob <- plot_global_curve(
+  tab_global = tab3_global,
+  title = "Model III: prey speed + prey space", 
+  param_summ = params3
 )
 
 # ==========================================================================
@@ -452,6 +452,13 @@ figure <- ggarrange(
 )
 
 # ==========================================================================
+# ==========================================================================
+
+
+
+
+
+# ==========================================================================
 # 5. Export the figure
 # ==========================================================================
 
@@ -467,3 +474,6 @@ ggsave(
   type = "cairo-png"
 )
 figure
+
+# ==========================================================================
+# ==========================================================================

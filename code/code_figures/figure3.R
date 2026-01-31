@@ -1,7 +1,7 @@
 # ==========================================================================
 
 #                                 Figure 3
-#                   Plot random effect means distributions
+#                   Plot random effect mean correlations
 
 # ==========================================================================
 
@@ -22,9 +22,7 @@ library(ggpubr)
 
 path <- file.path(getwd(), "outputs", "outputs_models")
 
-fit2 <- readRDS(file.path(path, "asym-II.rds"))
-fit3 <- readRDS(file.path(path, "asym-III.rds"))
-fit4 <- readRDS(file.path(path, "asym-IV.rds"))
+fit1 <- readRDS(file.path(path, "asym-I.rds"))
 
 # ==========================================================================
 # ==========================================================================
@@ -55,13 +53,14 @@ pred_total_from_draws <- function(fit, nlpar = c("a", "b", "c"), prob = 0.89) {
   rcols <- grep(patt, names(draws), value = TRUE)
 
   # compute total draws per predator: fixed + random
-  rmat <- as.matrix(draws[, rcols, drop = FALSE])
+  draws_mat <- as.matrix(draws)
+  rmat <- draws_mat[, rcols, drop = FALSE]
   total_mat <- sweep(x = rmat, MARGIN = 1, STATS = b_int, FUN = "+")
 
   # summarize each predator column
   alpha <- (1 - prob) / 2
   qs <- apply(
-    x = total_mat,
+    X = total_mat,
     MARGIN = 2,
     FUN = quantile,
     probs = c(alpha, 0.5, 1 - alpha),
@@ -88,17 +87,17 @@ pred_total_from_draws <- function(fit, nlpar = c("a", "b", "c"), prob = 0.89) {
 
 prob_ci <- 0.89
 dt_a <- pred_total_from_draws(
-  fit = fit2,
+  fit = fit1,
   nlpar = "a",
   prob = prob_ci
 )
 dt_b <- pred_total_from_draws(
-  fit = fit2,
+  fit = fit1,
   nlpar = "b",
   prob = prob_ci
 )
 dt_c <- pred_total_from_draws(
-  fit = fit2,
+  fit = fit1,
   nlpar = "c",
   prob = prob_ci
 )
@@ -131,7 +130,7 @@ summ_vec <- function(x, prob = 0.89) {
 summ_draws <- function(x, prob = 0.89) summ_vec(x, prob)
 
 # Get draws
-draws <- as_draws_df(fit2)
+draws <- as_draws_df(fit1)
 
 rho_ab <- summ_draws(
   draws[["cor_predator_id__a_Intercept__b_Intercept"]],

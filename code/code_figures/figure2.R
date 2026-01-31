@@ -21,7 +21,7 @@ library(ggplot2)
 library(ggpubr)
 
 path <- file.path(getwd(), "outputs", "outputs_models")
-fit4 <- readRDS(file.path(path, "asym-IV.rds"))
+fit3 <- readRDS(file.path(path, "asym-III.rds"))
 
 # ==========================================================================
 # ==========================================================================
@@ -34,7 +34,7 @@ fit4 <- readRDS(file.path(path, "asym-IV.rds"))
 # 2. Extract posterior draws of predictions into a tidy table
 # ==========================================================================
 
-mf <- model.frame(fit4)
+mf <- model.frame(fit3)
 dt <- as.data.table(mf)
 
 pred_covars <- dt[, .(
@@ -89,14 +89,14 @@ labels_prey <- c("prey_speed", "prey_space")
 # Prepare tables -----------------------------------------------------------
 
 df_a <- make_ce_df(
-  fit = fit4,
+  fit = fit3,
   nlpar = "a",
   effects = effects_prey,
   labels  = labels_prey
 )
 
 df_c <- make_ce_df(
-  fit = fit4,
+  fit = fit3,
   nlpar = "c",
   effects = effects_prey,
   labels = labels_prey
@@ -116,7 +116,7 @@ df <- rbind(df_a, df_c)
 # 3. Extract posterior draws of individual means
 # ==========================================================================
 
-draws <- as_draws_df(fit4)
+draws <- as_draws_df(fit3)
 
 make_pred_values <- function(fit, draws, param, prob = 0.89) {
   alpha <- (1 - prob) / 2
@@ -165,8 +165,8 @@ make_pred_values <- function(fit, draws, param, prob = 0.89) {
 }
 
 # Predator-specific a_j and c_j
-pred_a_vals <- make_pred_values(fit4, draws, "a")
-pred_c_vals <- make_pred_values(fit4, draws, "c")
+pred_a_vals <- make_pred_values(fit3, draws, "a")
+pred_c_vals <- make_pred_values(fit3, draws, "c")
 
 df_a_speed <- data.frame(
   predator_id = pred_a_vals$predator_id,
