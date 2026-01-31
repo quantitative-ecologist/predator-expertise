@@ -438,8 +438,8 @@ plot3_glob <- plot_global_curve(
 # ==========================================================================
 
 figure <- ggarrange(
-  NULL, plot2_glob, NULL, plot3_glob, NULL, plot4_glob,
-  NULL, plot2_ind,  NULL, plot3_ind,  NULL, plot4_ind,
+  NULL, plot1_glob, NULL, plot2_glob, NULL, plot3_glob,
+  NULL, plot1_ind,  NULL, plot2_ind,  NULL, plot3_ind,
   ncol = 6, nrow = 2,
   labels = c(
     "(A)", "", "(B)", "", "(C)", "",
