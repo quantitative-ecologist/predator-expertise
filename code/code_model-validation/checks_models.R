@@ -1,6 +1,6 @@
 # =======================================================================
 
-#                       GAMM model diagnostics                          #
+#                       Asym model diagnostics                          #
 
 # =======================================================================
 
@@ -33,10 +33,10 @@ if (!dir.exists(output_path)) dir.create(output_path, recursive = TRUE)
 model_files <- list(
   LM_PreySpeed = "LM-PreySpeed.rds",
   LM_PreySpace = "LM-PreySpace.rds",
+  asym_baseline = "asym-baseline.rds",
   asym_I = "asym-I.rds",
   asym_II = "asym-II.rds",
-  asym_III = "asym-III.rds",
-  asym_IV = "asym-IV.rds"
+  asym_III = "asym-III.rds"
 )
 
 if (!mod %in% names(model_files)) {
