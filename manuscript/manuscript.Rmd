@@ -17,6 +17,9 @@ library(posterior)
 library(flextable)
 library(officer)
 library(dplyr)
+
+# Source helper functions
+source(here::here("code", "utils", "helpers.R"))
 ```
 
 ```{r}
@@ -43,142 +46,6 @@ dat[, date := as.POSIXct(sub(" .*", "", timestamp))]
 # Space rate within 0.2
 dat <- dat[prey_avg_space_rate <= 0.2]
 ```
-
-
-```{r}
-
-# 1. Function to extract transformed parameters with medians
-extract_model_params <- function(fit, prob = 0.89) {
-  # Calculate quantiles for credible intervals
-  alpha <- (1 - prob) / 2
-  q_lo  <- alpha
-  q_hi  <- 1 - alpha
-
-  # Get posterior draws
-  dr <- posterior::as_draws_df(fit)
-
-  # Extract raw parameters (on model scale)
-  a_draw <- dr$b_a_Intercept
-  b_draw <- dr$b_b_Intercept
-  c_draw <- dr$b_c_Intercept
-
-  # Transform
-  baseline_draw  <- plogis(b_draw)
-  asymptote_draw <- plogis(a_draw)
-  rate_draw <- exp(c_draw)
-
-  # Helper to compute median and CIs
-  summ <- function(x) {
-    c(
-      median = median(x),
-      lo = unname(stats::quantile(x, probs = q_lo)),
-      hi = unname(stats::quantile(x, probs = q_hi))
-    )
-  }
-
-  # Create a list with raw and transformed parameters
-  list(
-    # Transformed parameters
-    baseline = summ(baseline_draw),
-    asymptote = summ(asymptote_draw),
-    rate = summ(rate_draw),
-
-    # Raw parameters
-    raw_a = summ(a_draw),
-    raw_b = summ(b_draw),
-    raw_c = summ(c_draw),
-
-    # Store probability level
-    prob = prob
-  )
-}
-
-
-# 2. Function to extract slopes on parameters 
-# (for models with covariates on asym parameters)
-extract_param_slopes <- function(fit, prob = 0.89) {
-  alpha <- (1 - prob) / 2
-  q_lo  <- alpha
-  q_hi  <- 1 - alpha
-
-  dr <- posterior::as_draws_df(fit)
-
-  summ <- function(x) {
-    c(
-      median = median(x),
-      lo     = unname(stats::quantile(x, probs = q_lo)),
-      hi     = unname(stats::quantile(x, probs = q_hi))
-    )
-  }
-
-  # Initialize empty list
-  slopes <- list()
-
-  if ("b_a_Zprey_speed" %in% names(dr)) {
-    slopes$a_prey_speed <- summ(dr$b_a_Zprey_speed)
-  }
-  if ("b_c_Zprey_speed" %in% names(dr)) {
-    slopes$c_prey_speed <- summ(dr$b_c_Zprey_speed)
-  }
-
-  if ("b_a_Zprey_space" %in% names(dr)) {
-    slopes$a_prey_space <- summ(dr$b_a_Zprey_space)
-  }
-  if ("b_c_Zprey_space" %in% names(dr)) {
-    slopes$c_prey_space <- summ(dr$b_c_Zprey_space)
-  }
-
-  if ("b_betaduration_Intercept" %in% names(dr)) {
-    slopes$game_duration <- summ(dr$b_betaduration_Intercept)
-  }
-  if ("b_betarank_Intercept" %in% names(dr)) {
-    slopes$prey_rank <- summ(dr$b_betarank_Intercept)
-  }
-
-  slopes
-}
-
-
-# 3. Function to extract random effect standard deviations
-extract_random_effects <- function(fit, prob = 0.89) {
-  alpha <- (1 - prob) / 2
-  q_lo  <- alpha
-  q_hi  <- 1 - alpha
-
-  vars <- c(
-    "sd_predator_id__a_Intercept",
-    "sd_predator_id__b_Intercept",
-    "sd_predator_id__c_Intercept"
-  )
-
-  sum_sd <- posterior_summary(
-    fit,
-    variable = vars,
-    probs = c(q_lo, q_hi),
-    robust = TRUE
-  )
-
-  list(
-    sd_a = c(
-      median = sum_sd["sd_predator_id__a_Intercept", "Estimate"],
-      lo = sum_sd["sd_predator_id__a_Intercept", 3],
-      hi = sum_sd["sd_predator_id__a_Intercept", 4]
-    ),
-    sd_b = c(
-      median = sum_sd["sd_predator_id__b_Intercept", "Estimate"],
-      lo = sum_sd["sd_predator_id__b_Intercept", 3],
-      hi = sum_sd["sd_predator_id__b_Intercept", 4]
-    ),
-    sd_c = c(
-      median = sum_sd["sd_predator_id__c_Intercept", "Estimate"],
-      lo = sum_sd["sd_predator_id__c_Intercept", 3],
-      hi = sum_sd["sd_predator_id__c_Intercept", 4]
-    ),
-    prob = prob
-  )
-}
-```
-
 
 
 
@@ -377,21 +244,15 @@ gap_closed <- 1 - exp(-rate * experience)
 
 ## Acquisition of expertise at the population level
 
-As expected, the predator population acquired expertise following a monotonic pattern (Figure 1). Without accounting for any prey behaviour (model I), the population's initial hunting success was at `r toString(format(round(params1$baseline["median"], 2), nsmall = 2))` (89% CI: [`r toString(format(round(params1$baseline["lo"], 2), nsmall = 2))`, `r toString(format(round(params1$baseline["hi"], 2), nsmall = 2))`]), indicating a 20% chance of capturing the four prey. The rate of gain in expertise was of `r toString(format(round(params1$rate["median"], 2), nsmall = 2))` (89% CI: [`r toString(format(round(params1$rate["lo"], 2), nsmall = 2))`, `r toString(format(round(params1$rate["hi"], 2), nsmall = 2))`]) per match. Predators acquired expertise rapidly in the first 150 matches, reaching `r toString(format(round(gap_closed[3] * 100, 0), nsmall = 0))`% of the population's maximum hunting success. The population's maximum hunting success was of `r toString(format(round(params1$asymptote["median"], 2), nsmall = 2))` (89% CI: [`r toString(format(round(params1$asymptote["lo"], 2), nsmall = 2))`, `r toString(format(round(params1$asymptote["hi"], 2), nsmall = 2))`]) probability of capturing the four prey.
+As expected, the predator population's expertise increased steadily before reaching a plateau. (Figure 1). Without accounting for any prey behaviour (model I), the population's initial hunting success was at `r toString(format(round(params1$baseline["median"], 2), nsmall = 2))` (89% CI: [`r toString(format(round(params1$baseline["lo"], 2), nsmall = 2))`, `r toString(format(round(params1$baseline["hi"], 2), nsmall = 2))`]), indicating a 20% chance of capturing the four prey. The rate of gain in expertise was of `r toString(format(round(params1$rate["median"], 2), nsmall = 2))` (89% CI: [`r toString(format(round(params1$rate["lo"], 2), nsmall = 2))`, `r toString(format(round(params1$rate["hi"], 2), nsmall = 2))`]) per match. Predators acquired expertise rapidly in the first 150 matches, reaching `r toString(format(round(gap_closed[3] * 100, 0), nsmall = 0))`% of the population's maximum hunting success. The population's maximum hunting success was of `r toString(format(round(params1$asymptote["median"], 2), nsmall = 2))` (89% CI: [`r toString(format(round(params1$asymptote["lo"], 2), nsmall = 2))`, `r toString(format(round(params1$asymptote["hi"], 2), nsmall = 2))`]) probability of capturing the four prey.
 
-```{r fig1, out.width = "100%", fig.cap = "**Figure 1**. Median posterior predictions of the acquisition of predator hunting expertise. The predators' hunting success (i.e., the probability of consuming the four prey) is on the y-axis, and the predators' cumulative experience (i.e., the number of matches played before each observation) is on the x-axis. The results of model I (no control for prey behaviour), model II (control for prey speed), and model III (control for prey speed and space covered) are presented in panels, A, B, and C respectively. lots on the upper row show the acquisition of expertise for the average individual along side the median posterior values of the asymptotic model parameters estimated by the models. Plots on the lower row show among-individual differences in the acquisition of expertise, with each curve representing an individual predator. The median posterior standard deviations of the individual predator random effect are shown. All models displayed include the game duration and the prey rank as a linear covariates."}
+```{r fig1, out.width = "100%", fig.cap = "**Figure 1**. Median posterior predictions of the acquisition of predator hunting expertise. The predators' hunting success (i.e., the probability of consuming the four prey) is on the y-axis, and the predators' cumulative experience (i.e., the number of matches played before each observation) is on the x-axis. The results of model I (no control for prey behaviour), model II (control for prey speed), and model III (control for prey speed and space covered) are presented in panels, A, B, and C respectively. Panels on the upper row show the predicted acquisition of expertise for the average individual alongside the median posterior values of the asymptotic model parameters. Panels on the lower row show among-individual differences in the acquisition of expertise, with each curve representing an individual predator. The median posterior standard deviations of the individual predator random effect are shown. All models displayed include the game duration and the prey rank as covariates."}
 knitr::include_graphics(
   here::here("outputs", "outputs_figures", "figure1.png")
 )
 ```
 
-We did not find evidence that the predator population's gain in expertise changed with prey behaviour. Controlling for prey speed and space coverage did not qualitatively alter the form of the relationship between success and experience at the population level (Figure 1) However, there was a marginal negative effect of prey speed on the maximum hunting success (Figure 2). Hence, predators that encountered faster prey tended to have a lower maximum hunting success. Overall, model III, which included all prey features, was the best at predicting the acquisition of predator expertise (Table 2).
-
-There was also strong evidence that hunting success declined when predators pursued faster prey or prey occupying more space in the virtual environment (Figure 2A-B). Predators had lower hunting success when hunting prey of greater skill (i.e. lower rank values, Figure 2C).
-
-**Need to update the table**
-
-**Need to decide if I keep the results of prey speed and space, maybe suppmat**
+We did not find evidence that prey behaviour had an effect on the predator population's gain in expertise. Controlling for prey speed and space coverage did not qualitatively alter the form of the relationship between success and experience at the population level (Figure 1). However, there was a marginal negative effect of prey speed on the maximum hunting success, suggesting that predators that encountered faster prey had a lower maximum hunting success (Figure 2). Overall, model III, which included all prey features, was the best at predicting the acquisition of predator expertise (Table 2).
 
 \newpage
 
@@ -507,8 +368,6 @@ tab2
 ```
 
 
-
-
 ```{r fig2, out.width = "100%", fig.cap = "**Figure 2**. Predicted relationships between the asymptotic model parameters and prey behaviour. The black line represents the median posterior predictions, and the gray band the the 89% compatibility interval. Individual observations are the posterior medians for each predator. (Upper left) Maximum hunting success (a) as a function of the average speed of the prey group. (Upper right) Maximum hunting success (a) as a function of the average space coverage of the prey group. (Lower left) Rate of gain in expertise (c) as a function of the average speed of the prey group. (Lower right) Rate of gain in expertise (c) as a function of the average space coverage of the prey group. The predictions are from Model III."}
 knitr::include_graphics(
   here::here(
@@ -518,18 +377,20 @@ knitr::include_graphics(
 )
 ```
 
-## Acquisition of expertise at the individual level
+## Prey antipredator behaviour
 
-Our results show that individual predators displayed large differences in their acquisition of expertise, regardless of whether we controlled for prey behaviour (Figure 1D-F and Figure 4). However, the extent of the variation in the relationship between success and experience was shaped by the prey's skill, as observed by comparing the posterior distributions of individual-level parameters among models with and without the prey rank (Figure 4). Specifically, the standard deviations of individual intercepts (median model I = `r toString(round(sum1[2,]$Estimate, digits = 2))` vs median model II = `r toString(round(sum2[2,]$Estimate, digits = 2))`), slopes (median model I = `r toString(round(sum1[3,]$Estimate, digits = 2))` vs median model II = `r toString(round(sum2[3,]$Estimate, digits = 2))`), and wiggliness (median model I = `r toString(round(sum1[4,]$Estimate, digits = 2))` vs median model II = `r toString(round(sum2[4,]$Estimate, digits = 2))`) were all larger in model II compared to model I. Controlling for prey rank thus reveals how predators may differ in expertise acquisition if they hunt prey that are not of the same skill level as themselves.
+Prey groups composed of individuals with greater skill moved faster than those composed of individuals with lower skill (Figure 5A). In contrast, there was no change in prey space coverage with increasing skill (Figure 3B). There was also strong evidence that hunting success declined when predators pursued faster prey or prey occupying more space in the virtual environment (Figure S2 A-B). Predators had lower hunting success when hunting prey of greater skill (i.e. lower rank values, Figure S2 C).
 
-Among-individual differences in average hunting success remained unchanged regardless of whether we controlled for prey speed and prey space coverage (median model II = `r toString(round(sum2[2,]$Estimate, digits = 2))` vs median model V = `r toString(round(sum5[2,]$Estimate, digits = 2))` vs median model VI = `r toString(round(sum6[2,]$Estimate, digits = 2))`). Similarly, controlling for both behaviours did not alter expertise acquisition (median model II = `r toString(round(sum2[3,]$Estimate, digits = 2))` vs median model V = `r toString(round(sum5[3,]$Estimate, digits = 2))` vs median model VI = `r toString(round(sum6[3,]$Estimate, digits = 2))`), as the posterior distributions of the standard deviations showed nearly complete overlap (Figure 4).
-
-```{r fig3, out.width = "100%", fig.cap = "**Figure 3**. Posterior distributions of individual random effect standard deviations for asymptotic parameters. The asymptotic parameters are displayed on the y-axis, and their standard deviation values are displayed on the x-axis. The vertical lines are the medians of the posterior distributions. The light pink (lightest) distributions are for the model accounting only for the game duration and prey rank (model I), the light purple (lighter) distributions are for the model accounting for game duration and the prey rank and prey speed on asymptotic parameters (model II), and the dark purple (darker) distributions are for the model accounting for the game duration, the prey rank and all prey behaviours on asymptotic parameters (model III)."}
+```{r fig5, out.width = "100%", fig.cap = "**Figure 5**. Median posterior predictions of the relationship between prey behaviour and prey skill. The average behaviour of the prey group is on the y-axis, and the average rank of the prey group is on the x-axis. The colour gradient showcases the density of observations, with lighter colours indicating lower densities, and darker colours indicating higher densities of observations. Lower rank values indicate that the prey group is more skilled, while higher values indicate that the prey are less skilled. Panel A is for the linear model of prey speed, and panel B is for the linear model of prey space coverage."}
 knitr::include_graphics(
-  here::here("outputs", "outputs_figures", "figure4.png")
+  here::here("outputs", "outputs_figures", "figure5.png")
 )
 ```
 
+
+## Acquisition of expertise at the individual level
+
+Our results show that individual predators displayed substantial differences in their acquisition of expertise (Figure 1A-C). Individuals that had a low initial hunting success ended up with a lower maximum hunting success (Figure 3A). In addition, individuals with the greatest maximum hunting success were those with a lower rate of gain in expertise (Figure 3B). There was no apparent relationship between the rate of gain in expertise and the predator's maximum hunting success (Figure 3C).
 
 ```{r fig4, out.width = "100%", fig.cap = "**Figure 4**. correlations."}
 knitr::include_graphics(
@@ -538,14 +399,23 @@ knitr::include_graphics(
 ```
 
 
-Prey groups composed of individuals with greater skill moved faster than those composed of individuals with lower skill (Figure 3A). In contrast, there was no change in prey space coverage with increasing skill (Figure 3B).
 
-```{r fig5, out.width = "100%", fig.cap = "**Figure 5**. Median posterior predictions of the relationship between prey behaviour and prey skill. The average behaviour of the prey group is on the y-axis, and the average rank of the prey group is on the x-axis. The colour gradient showcases the density of observations, with lighter colours indicating lower densities, and darker colours indicating higher densities of observations. Lower rank values indicate that the prey group is more skilled, while higher values indicate that the prey are less skilled. Panel A is for the linear model of prey speed, and panel B is for the linear model of prey space coverage."}
+, regardless of whether we controlled for prey behaviour (Figure 1A-C and Figure 4). 
+
+However, the extent of the variation in the relationship between success and experience was shaped by the prey's skill, as observed by comparing the posterior distributions of individual-level parameters among models with and without the prey rank (Figure 4). 
+
+Specifically, the standard deviations of individual intercepts (median model I = `r toString(round(sum1[2,]$Estimate, digits = 2))` vs median model II = `r toString(round(sum2[2,]$Estimate, digits = 2))`), slopes (median model I = `r toString(round(sum1[3,]$Estimate, digits = 2))` vs median model II = `r toString(round(sum2[3,]$Estimate, digits = 2))`), and wiggliness (median model I = `r toString(round(sum1[4,]$Estimate, digits = 2))` vs median model II = `r toString(round(sum2[4,]$Estimate, digits = 2))`) were all larger in model II compared to model I. 
+
+Controlling for prey rank thus reveals how predators may differ in expertise acquisition if they hunt prey that are not of the same skill level as themselves.
+
+
+Among-individual differences in average hunting success remained unchanged regardless of whether we controlled for prey speed and prey space coverage (median model II = `r toString(round(sum2[2,]$Estimate, digits = 2))` vs median model V = `r toString(round(sum5[2,]$Estimate, digits = 2))` vs median model VI = `r toString(round(sum6[2,]$Estimate, digits = 2))`). Similarly, controlling for both behaviours did not alter expertise acquisition (median model II = `r toString(round(sum2[3,]$Estimate, digits = 2))` vs median model V = `r toString(round(sum5[3,]$Estimate, digits = 2))` vs median model VI = `r toString(round(sum6[3,]$Estimate, digits = 2))`), as the posterior distributions of the standard deviations showed nearly complete overlap (Figure 4).
+
+```{r fig3, out.width = "100%", fig.cap = "**Figure 3**. Posterior distributions of individual random effect standard deviations for asymptotic parameters. The asymptotic parameters are displayed on the y-axis, and their standard deviation values are displayed on the x-axis. The vertical lines are the medians of the posterior distributions. The light pink (lightest) distributions are for the model accounting only for the game duration and prey rank (model I), the light purple (lighter) distributions are for the model accounting for game duration and the prey rank and prey speed on asymptotic parameters (model II), and the dark purple (darker) distributions are for the model accounting for the game duration, the prey rank and all prey behaviours on asymptotic parameters (model III)."}
 knitr::include_graphics(
-  here::here("outputs", "outputs_figures", "figure5.png")
+  here::here("outputs", "outputs_figures", "figure3.png")
 )
 ```
-
 
 
 
