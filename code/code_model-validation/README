@@ -1,0 +1,76 @@
+# Model validation and diagnostics
+
+This folder contains scripts for model validation and diagnostics on HPC systems. 
+
+## Contents
+
+### WAIC model comparison
+
+**Individual model scripts:**
+
+- `waic-asym-I.R` / `run_waic-asym-I.sh`
+- `waic-asym-II.R` / `run_waic-asym-II.sh`
+- `waic-asym-III.R` / `run_waic-asym-III.sh`
+
+
+**Comparison table:**
+
+- `waic-table.R` - Generates comparison table from WAIC results
+
+### Model diagnostics
+
+- `checks_models.R` / `run_checks_models.sh` - Model convergence diagnostics
+
+
+## Running WAIC validation on Fir
+
+### Step 1: Submit individual model jobs
+
+The WAIC validation was performed on [Fir](https://docs.alliancecan.ca/wiki/Fir).
+
+From the project root on the HPC cluster, and assuming that all files are in the root folder:
+
+```bash
+sbatch run_waic-asym-I.sh
+sbatch run_waic-asym-II.sh
+sbatch run_waic-asym-III.sh
+```
+
+Each job:
+- Allocates 64GB RAM
+- Loads the fitted model from `root`
+- Computes WAIC
+- Saves results to `root/waic_asym-<model>.rds`
+
+### Step 2: Generate comparison table
+
+This step can be performed on your computer. Once all three jobs complete, run:
+
+```bash
+Rscript code/code_model-validation/waic-table.R
+```
+
+This creates:
+- `outputs/outputs_model-validation/waic-table.rds`
+- `outputs/outputs_model-validation/waic-table.csv`
+
+The table shows ELPD differences and standard errors for model comparison.
+
+
+## Model diagnostics
+
+To run convergence diagnostics from the root folder:
+
+```bash
+./code/code_model-validation/run_checks_models.sh
+```
+
+This generates:
+- Trace plots for all parameters (PDF)
+- Posterior predictive checks (PNG):
+  - `dens_overlay`
+  - `stat_2d`
+  - `median` predictive statistic
+  - `error_scatter_avg`
+
+Outputs saved to `outputs/outputs_model-validation/`
