@@ -143,7 +143,7 @@ $$
 \begin{pmatrix} u_{a,j} \\ u_{b,j} \\ u_{c,j} \end{pmatrix} \sim \text{MVN}(\mathbf{0}, \Sigma)
 $$
 
-This covariance structure allowed us to estimate correlations among individual differences in initial success, rate of gain, and maximum hunting success. For example, we could test if predators that were initially successful also had higher rates of gain in expertise and higher maximum hunting success.
+This covariance structure allowed us to estimate correlations among individual differences in initial success, rate of gain, and maximum hunting success. With this, we can test if predators that were initially successful also had higher rates of gain in expertise and higher maximum hunting success.
 
 ```{r model-summary-table, ft.align = "left"}
 # Create model summary table
@@ -195,7 +195,7 @@ model_table
 
 We defined informative priors for the asymptotic parameter's intercepts to reflect biologically meaningful expectations. We centered the upper asymptote (a) at 1.39 (logit scale, corresponding to 80% success rate) with SD = 0.7, while the initial value (b) was centered at -1.10 (25% success rate) with SD = 0.7. We set a Normal(-5.5, 1) prior on the learning rate parameter (c), constraining it to plausible rates of improvement over the observed experience range. We used mildly informative priors for most effect sizes and variance components. The effects of prey speed and space use on parameters a and c received Normal(-0.3, 0.3) priors, reflecting a weak expectation of negative effects. Similarly, we applied a Normal(1, 0.5) prior on the game duration and a Normal(0.5, 0.5) on the prey rank. Lastly, we applied a half-normal prior (0, 1) on the random effect standard deviation parameters, an LKJ(2) prior on the correlation matrix, and a Normal(log(2), 0.5) prior on the shape parameter.
 
-We tested the hypothesis that antipredator behaviour impairs the acquisition of predator expertise at the population level by comparing the mean asymptotic parameter values describing the global trends of each model (Figure 1). This allowed us evaluate if prey behaviour affected the acquisition of expertise at the population level. At the individual level, we tested the hypothesis that antipredator behaviour generates differences among predators in expertise acquisition by 1) assessing the relationship between the parameter values of a, b, and c, and prey behaviour, and 2) by comparing the individual-level standard deviation parameters of a, b, and c. Specifically, we compared the posterior distributions of standard deviations for the random intercepts (i.e., mean differences among predators) among the three models for parameters a, b, and c (Figure 4). We used approximate leave-one-out cross-validation with Pareto-smoothed importance sampling to determine which model was best at predicting the data [@vehtari.etal2017;@piironen.vehtari2017;@vehtari.etal2022].
+We tested the hypothesis that antipredator behaviour impairs the acquisition of predator expertise at the population level by comparing the mean asymptotic parameter values describing the global trends of each model (Figure 1). This allowed us evaluate if prey behaviour affected the acquisition of expertise at the population level. At the individual level, we tested the hypothesis that antipredator behaviour generates differences among predators in expertise acquisition by 1) assessing the relationship between the parameter values of a, b, and c, and prey behaviour, and 2) by comparing the individual-level standard deviation parameters of a, b, and c. Specifically, we compared the posterior distributions of standard deviations for the random intercepts (i.e., mean differences among predators) among the three models for parameters a, b, and c (Figure 4). Lastly, we computed the widely applicable information criterion (WAIC) to obtain the expected pointwise density, a measure of predictive accuracy allowing us to determine which model was best at predicting the data [@watanabe2010;@vehtari.etal2017;@piironen.vehtari2017].
 
 
 ### Model specification: prey antipredator behaviour
@@ -226,6 +226,11 @@ params1 <- extract_model_params(fit1, prob = 0.89)
 params2 <- extract_model_params(fit2, prob = 0.89)
 params3 <- extract_model_params(fit3, prob = 0.89)
 
+re1 <- extract_random_effects(fit1, prob = 0.89)
+re2 <- extract_random_effects(fit2, prob = 0.89)
+re3 <- extract_random_effects(fit3, prob = 0.89)
+
+
 # Calculate proportion of gap closed
 experience <- c(50, 100, 150, 200, 300, 454)
 rate <- params1$rate["median"]
@@ -239,7 +244,6 @@ gap_closed <- 1 - exp(-rate * experience)
 # 300 matches: 93% of gap closed
 # 454 matches: 99% of gap closed
 
-
 ```
 
 ## Acquisition of expertise at the population level
@@ -250,6 +254,7 @@ As expected, the predator population's expertise increased steadily before reach
 knitr::include_graphics(
   here::here("outputs", "outputs_figures", "figure1.png")
 )
+
 ```
 
 We did not find evidence that prey behaviour had an effect on the predator population's gain in expertise. Controlling for prey speed and space coverage did not qualitatively alter the form of the relationship between success and experience at the population level (Figure 1). However, there was a marginal negative effect of prey speed on the maximum hunting success, suggesting that predators that encountered faster prey had a lower maximum hunting success (Figure 2). Overall, model III, which included all prey features, was the best at predicting the acquisition of predator expertise (Table 2).
@@ -258,27 +263,28 @@ We did not find evidence that prey behaviour had an effect on the predator popul
 
 ```{r table2, ft.align = "left"}
 # ===========================================================================
-# 1. Import the model fit
+# 1. Import WAIC results
 # ===========================================================================
 
-# Open the loo table
+# Load WAIC comparison table
 path <- file.path(here::here("outputs", "outputs_model-validation"))
-loo_tab <- data.table(readRDS(file.path(path, "loo-cv-table_GAMM.rds")))
+waic_tab <- data.table(readRDS(file.path(path, "waic-table.rds")))
 
-# Add model column
-loo_tab[
-  , model1 := c(
-    "(VI) experience + ID smoothers + prey rank + prey speed + prey space",
-    "(V) experience + ID smoothers + prey rank + prey speed",
-    "(IV) ID smoothers + prey rank + prey speed",
-    "(II) experience + ID smoothers + prey rank",
-    "(III) ID smoothers + prey rank",
-    "(I) experience + ID smoothers"
-  )
-]
+# Format elpd_diff with SE in parentheses
+waic_tab[, elpd_diff_formatted := sprintf("%.1f (%.1f)", elpd_diff, se_diff)]
 
-# Reorder columns
-loo_tab <- loo_tab[, c(10, 2:9)]
+# Format elpd_waic with SE in parentheses
+waic_tab[, elpd_waic_formatted := sprintf("%.1f (%.1f)", elpd_waic, se_elpd_waic)]
+
+# Add model descriptions
+waic_tab[, model_desc := c(
+  "Model III: prey speed and prey space covered",
+  "Model II: prey speed",
+  "Model I: no prey features"
+)]
+
+# Select and reorder columns for display
+waic_display <- waic_tab[, .(model_desc, elpd_waic_formatted, elpd_diff_formatted)]
 
 # ===========================================================================
 # ===========================================================================
@@ -288,35 +294,8 @@ loo_tab <- loo_tab[, c(10, 2:9)]
 # 2. Compute the table using flextable
 # ===========================================================================
 
-# Prepare the table parameters ----------------------------------------------
-
-# Custom header
-my_header <- data.frame(
-  col_keys = c(
-    "model1",
-    "elpd_diff",
-    "se_diff",
-    "elpd_loo",
-    "se_elpd_loo"
-  ),
-  line1 = c(
-    "model",
-    "elpd \ndifference",
-    "sd \ndifference",
-    "elpd loo \nvalue",
-    "elpd loo \nstandard error"
-  ),
-  stringsAsFactors = FALSE
-)
-
 # Custom theme
 my_theme <- function(x, ...) {
-  x <- colformat_double(
-    x,
-    big.mark = " ",
-    decimal.mark = ".",
-    digits = 2
-  )
   x <- set_table_properties(x, layout = "autofit")
   x <- border_remove(x)
   std_border <- fp_border(width = 1, color = "black")
@@ -327,37 +306,34 @@ my_theme <- function(x, ...) {
 
 # Create the table ----------------------------------------------------------
 
-tab2 <- loo_tab %>%
-  select(model1, elpd_diff, se_diff, elpd_loo, se_elpd_loo) %>%
+tab2 <- waic_display %>%
   flextable() %>%
   set_header_labels(
-    model1      = "model",
-    elpd_diff   = "elpd \ndifference",
-    se_diff     = "sd \ndifference",
-    elpd_loo    = "elpd loo \nvalue",
-    se_elpd_loo = "elpd loo \nstandard error"
+    model_desc = "Model",
+    elpd_waic_formatted = "elpd WAIC\n(SE)",
+    elpd_diff_formatted = "elpd difference\n(SE)"
   ) %>%
   compose(
-    part = "header", j = "elpd_diff",
+    part = "header", j = "elpd_waic_formatted",
     value = as_paragraph(
-      as_chunk("elpd \ndifference"), # line break kept
+      as_chunk("elpd WAIC\n(SE)"),
       as_sup("a")
     )
   ) %>%
   my_theme() %>%
   align(align = "left", part = "all", j = 1) %>%
-  align(align = "center", part = "all", j = 2:5) %>%
+  align(align = "center", part = "all", j = 2:3) %>%
   footnote(
-    i = 1, j = "elpd_diff",
+    i = 1, j = "elpd_waic_formatted",
     part = "header",
     value = as_paragraph(
       as_sup("a "),
-      "'elpd' refers to the expected log pointwise density and is the value chosen to select the best model."
+      "'elpd' refers to the expected log pointwise predictive density, which is the expected log probability of observing new data. Higher values indicate greater predictive accuracy."
     ),
     ref_symbols = " "
   ) %>%
   set_caption(
-    caption = "Table 2. Leave-one-out (loo) cross-validation results comparing the predictive performance of the six GAMMs estimating the relationship between hunting success and predator experience. All models reported include the game duration as a control. Only differences in smoothing functions and prey covariates are reported.",
+    caption = "Table 2. WAIC comparison results for the three asymptotic mixed models estimating the relationship between hunting success (y) and predator experience (x). All models include game duration and prey rank as covariates. Models differ in the prey behavioural covariates included on asymptotic parameters.",
     style = "Table Caption"
   ) %>%
   font(fontname = "Times New Roman", part = "all") %>%
@@ -365,63 +341,56 @@ tab2 <- loo_tab %>%
   fontsize(size = 12, part = "footer")
 
 tab2
+
 ```
 
 
 ```{r fig2, out.width = "100%", fig.cap = "**Figure 2**. Predicted relationships between the asymptotic model parameters and prey behaviour. The black line represents the median posterior predictions, and the gray band the the 89% compatibility interval. Individual observations are the posterior medians for each predator. (Upper left) Maximum hunting success (a) as a function of the average speed of the prey group. (Upper right) Maximum hunting success (a) as a function of the average space coverage of the prey group. (Lower left) Rate of gain in expertise (c) as a function of the average speed of the prey group. (Lower right) Rate of gain in expertise (c) as a function of the average space coverage of the prey group. The predictions are from Model III."}
 knitr::include_graphics(
-  here::here(
-    "outputs", "outputs_figures",
-    "figure2.png"
-  )
+  here::here("outputs", "outputs_figures", "figure2.png")
 )
+
 ```
 
 ## Prey antipredator behaviour
 
-Prey groups composed of individuals with greater skill moved faster than those composed of individuals with lower skill (Figure 5A). In contrast, there was no change in prey space coverage with increasing skill (Figure 3B). There was also strong evidence that hunting success declined when predators pursued faster prey or prey occupying more space in the virtual environment (Figure S2 A-B). Predators had lower hunting success when hunting prey of greater skill (i.e. lower rank values, Figure S2 C).
+Prey groups composed of individuals with greater skill moved faster than those composed of individuals with lower skill (Figure 5A). In contrast, there was no change in prey space coverage with increasing skill (Figure 3B). There was also strong evidence that hunting success declined when predators pursued faster prey or prey covering more space in the virtual environment (Figure S2 A-B). Predators had lower hunting success when hunting prey of greater skill (i.e. lower rank values, Figure S2 C).
 
-```{r fig5, out.width = "100%", fig.cap = "**Figure 5**. Median posterior predictions of the relationship between prey behaviour and prey skill. The average behaviour of the prey group is on the y-axis, and the average rank of the prey group is on the x-axis. The colour gradient showcases the density of observations, with lighter colours indicating lower densities, and darker colours indicating higher densities of observations. Lower rank values indicate that the prey group is more skilled, while higher values indicate that the prey are less skilled. Panel A is for the linear model of prey speed, and panel B is for the linear model of prey space coverage."}
+```{r fig3, out.width = "100%", fig.cap = "**Figure 3**. Median posterior predictions of the relationship between prey behaviour and prey skill. The average behaviour of the prey group is on the y-axis, and the average rank of the prey group is on the x-axis. The colour gradient showcases the density of observations, with lighter colours indicating lower densities, and darker colours indicating higher densities of observations. Lower rank values indicate that the prey group is more skilled, while higher values indicate that the prey are less skilled. Panel A is for the linear model of prey speed, and panel B is for the linear model of prey space coverage."}
 knitr::include_graphics(
   here::here("outputs", "outputs_figures", "figure5.png")
 )
+
 ```
 
 
 ## Acquisition of expertise at the individual level
 
-Our results show that individual predators displayed substantial differences in their acquisition of expertise (Figure 1A-C). Individuals that had a low initial hunting success ended up with a lower maximum hunting success (Figure 3A). In addition, individuals with the greatest maximum hunting success were those with a lower rate of gain in expertise (Figure 3B). There was no apparent relationship between the rate of gain in expertise and the predator's maximum hunting success (Figure 3C).
+Our results show that individual predators displayed substantial differences in their acquisition of expertise (Figure 1A-C). Individuals that had a low initial hunting success ended up with a lower maximum hunting success (Figure 4). In addition, individuals with the greatest maximum hunting success were those with a lower rate of gain in expertise (Figure 4). However, this relationship was decoupled when we accounted for prey behaviour in the model (cor: -002, 89% CI: -0.16, 0.12), indicating that prey behaviour influenced the relationship between the maximum hunting success and the rate of gain in expertise. There was no apparent relationship between the rate of gain in expertise and the predator's maximum hunting success (Figure 4).
 
-```{r fig4, out.width = "100%", fig.cap = "**Figure 4**. correlations."}
+```{r fig4, out.width = "100%", fig.cap = "**Figure 4**. Among-individual correlations between the asymptotic model parameters. Each point represents the median posterior parameter value with the 89% credible interval for a single predator player. The left panel shows the relationship between the initial hunting success (b) and the maximum hunting success (a). The center panel shows the relationship between the rate of gain in expertise (c) and the maximum hunting success (a). The left panel shows the relationship between the rate of gain in expertise (c) and the initial hunting success (b). The correlations reported in this figure come from the model that does not account for prey behaviour (Model I)."}
 knitr::include_graphics(
   here::here("outputs", "outputs_figures", "figure3.png")
 )
+
 ```
 
+The standard deviation of the rate of gain in expertise in model I (median model I = `r toString(format(round(re1$sd_c["median"], 2), nsmall = 2))`) was smaller of than those of model II and III (Figure 5). Differences in the rate of expertise acquisition among predators were similar between model II and III (median model II = `r toString(format(round(re2$sd_c["median"], 2), nsmall = 2))` vs median model III = `r toString(format(round(re3$sd_c["median"], 2), nsmall = 2))`), with the posterior distributions of the standard deviations showing nearly complete overlap (Figure 5). Hence, including prey space coverage did not explain additional variation in the rate of expertise acquisition among predators.
 
+We found weak evidence that the standard deviation of the maximum hunting success of model I (median model I = `r toString(format(round(re1$sd_a["median"], 2), nsmall = 2))`) was slightly greater than those of model II and III (Figure 5). Compared to model II, among-individual differences in maximum hunting success remained unchanged after accounting for prey space coverage (median model II = `r toString(format(round(re2$sd_a["median"], 2), nsmall = 2))` vs median model III = `r toString(format(round(re3$sd_a["median"], 2), nsmall = 2))`). 
 
-, regardless of whether we controlled for prey behaviour (Figure 1A-C and Figure 4). 
-
-However, the extent of the variation in the relationship between success and experience was shaped by the prey's skill, as observed by comparing the posterior distributions of individual-level parameters among models with and without the prey rank (Figure 4). 
-
-Specifically, the standard deviations of individual intercepts (median model I = `r toString(round(sum1[2,]$Estimate, digits = 2))` vs median model II = `r toString(round(sum2[2,]$Estimate, digits = 2))`), slopes (median model I = `r toString(round(sum1[3,]$Estimate, digits = 2))` vs median model II = `r toString(round(sum2[3,]$Estimate, digits = 2))`), and wiggliness (median model I = `r toString(round(sum1[4,]$Estimate, digits = 2))` vs median model II = `r toString(round(sum2[4,]$Estimate, digits = 2))`) were all larger in model II compared to model I. 
-
-Controlling for prey rank thus reveals how predators may differ in expertise acquisition if they hunt prey that are not of the same skill level as themselves.
-
-
-Among-individual differences in average hunting success remained unchanged regardless of whether we controlled for prey speed and prey space coverage (median model II = `r toString(round(sum2[2,]$Estimate, digits = 2))` vs median model V = `r toString(round(sum5[2,]$Estimate, digits = 2))` vs median model VI = `r toString(round(sum6[2,]$Estimate, digits = 2))`). Similarly, controlling for both behaviours did not alter expertise acquisition (median model II = `r toString(round(sum2[3,]$Estimate, digits = 2))` vs median model V = `r toString(round(sum5[3,]$Estimate, digits = 2))` vs median model VI = `r toString(round(sum6[3,]$Estimate, digits = 2))`), as the posterior distributions of the standard deviations showed nearly complete overlap (Figure 4).
-
-```{r fig3, out.width = "100%", fig.cap = "**Figure 3**. Posterior distributions of individual random effect standard deviations for asymptotic parameters. The asymptotic parameters are displayed on the y-axis, and their standard deviation values are displayed on the x-axis. The vertical lines are the medians of the posterior distributions. The light pink (lightest) distributions are for the model accounting only for the game duration and prey rank (model I), the light purple (lighter) distributions are for the model accounting for game duration and the prey rank and prey speed on asymptotic parameters (model II), and the dark purple (darker) distributions are for the model accounting for the game duration, the prey rank and all prey behaviours on asymptotic parameters (model III)."}
+```{r fig5, out.width = "100%", fig.cap = "**Figure 5**. Posterior distributions of individual random effect standard deviations for asymptotic parameters. The asymptotic parameters are displayed on the y-axis, and their standard deviation values are displayed on the x-axis. The vertical lines are the medians of the posterior distributions. The light pink (lightest) distributions are for the model accounting only for the game duration and prey rank (model I), the light purple (lighter) distributions are for the model accounting for game duration and the prey rank and prey speed on asymptotic parameters (model II), and the dark purple (darker) distributions are for the model accounting for the game duration, the prey rank and all prey behaviours on asymptotic parameters (model III)."}
 knitr::include_graphics(
-  here::here("outputs", "outputs_figures", "figure3.png")
+  here::here("outputs", "outputs_figures", "figure4.png")
 )
 ```
-
 
 
 
 
 # DISCUSSION
+
+**The extent of the variation in the relationship between success and experience was shaped by the prey's skill, as observed by comparing the posterior distributions of individual-level parameters among models with and without the prey rank (Figure 4). talk about this with the masking effect when we don't account for it**
 
 Using a virtual predator-prey system where we monitored predator hunting success across experience, we provide rare empirical support for the hypothesis that prey behaviour can modulate the acquisition of hunting expertise at the population level. We show that, on average, predators are expected to increase their hunting success with experience if they hunt prey of average skill. While we could not show that prey behaviour directly impaired expertise acquisition in predators, we found that predators reached their maximum hunting success sooner when pursuing prey with average movement behaviour (i.e., speed and space coverage) over repeated encounters. This is most likely because faster prey are more difficult to chase, while those that cover a lot of space are more difficult to locate since they are always moving, resulting in predators having lower success. We also observed that prey with greater skill moved faster, but did not increase their space coverage. At the individual level, predators displayed important differences in expertise acquisition that were apparent only after accounting for prey skill. While this is most likely due to the game pairing system, it highlights how prey can shape the predator hunting success over time.
 
