@@ -29,7 +29,7 @@ data <- fread(
   select = c(
     "predator_id",
     "game_duration",
-    "prey_avg_amount_tiles_visited",
+    "prey_avg_space_rate",
     "prey_avg_rank"
   )
 )
@@ -39,6 +39,9 @@ data[, predator_id := as.factor(predator_id)]
 
 # Remove any NAs
 data <- data[complete.cases(data)]
+
+# Space rate within 0.2
+data <- data[prey_avg_space_rate <= 0.2]
 
 
 
@@ -68,7 +71,7 @@ data[, c("Zgame_duration", "Zprey_avg_rank") := lapply(.SD, standardize),
 # Model formula ------------------------------------------------------------
 
 model_formula <- brmsformula(
-  prey_avg_amount_tiles_visited ~ Zprey_avg_rank + Zgame_duration + (1 | predator_id)
+  prey_avg_space_rate ~ Zprey_avg_rank + Zgame_duration + (1 | predator_id)
 )
 
 
@@ -77,7 +80,7 @@ model_formula <- brmsformula(
 
 get_prior(
   formula = model_formula,
-  family = gaussian(),
+  family = lognormal(),
   data = data
 )
 
@@ -93,13 +96,13 @@ priors <- c(
     coef = "Zgame_duration"
   ),
   set_prior(
-    "normal(-0.5, 1)",
+    "normal(-0.3, 1)",
     class = "b",
     coef = "Zprey_avg_rank"
   ),
   # prior on the intercept
   set_prior(
-    "normal(15, 0.5)",
+    "normal(log(0.05), 0.5)",
     class = "Intercept"
   ),
   # prior on sd parameters
@@ -127,7 +130,7 @@ priors <- c(
 
 fit <- brm(
   formula = model_formula,
-  family = gaussian(),
+  family = lognormal(),
   warmup = 500,
   iter = 1500,
   thin = 1,
