@@ -41,7 +41,7 @@ data <- fread(
     "predator_id",
     "game_duration",
     "prey_avg_speed",
-    "prey_avg_amount_tiles_visited",
+    "prey_avg_space_rate",
     "prey_avg_rank"
   )
 )
@@ -51,6 +51,9 @@ data[, predator_id := as.factor(predator_id)]
 
 # Remove any NAs
 data <- data[complete.cases(data)]
+
+# Space rate within 0.2
+data <- data[prey_avg_space_rate <= 0.2]
 
 
 # Standardise the variables (Z-scores) -------------------------------------
@@ -196,7 +199,7 @@ p1 <- ggplot() +
 p2 <- ggplot() +
   geom_hex(
     data = data,
-    aes(x = prey_avg_rank, y = prey_avg_amount_tiles_visited),
+    aes(x = prey_avg_rank, y = prey_avg_space_rate),
     bins = 60
   ) +
   geom_line(
