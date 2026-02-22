@@ -1,6 +1,6 @@
 ---
 title: |
-     Prey skill and behaviour in predator expertise acquisition: insights from a virtual ecosystem \
+     The role of prey behaviour in predator expertise acquisition: insights from a virtual ecosystem \
      Appendix
     
 output: 
@@ -151,12 +151,27 @@ knitr::include_graphics(
 ```
 
 
-```{r figS2, out.width = "100%", fig.cap = "**Figure S2**. Median posterior predictions of the acquisition of predator hunting expertise for model I where we control for the game duration exclusively (no prey features). The predators' hunting success (i.e., the probability of consuming the four prey) is on the y-axis, and the predators' cumulative experience (i.e., the number of matches played before each observation) is on the x-axis. Panel A shows the acquisition of expertise for the average individual. Panel B shows among individual differences in the acquisition of expertise, with each curve representing an individual predator."}
+\newpage
+
+```{r figS2, out.width = "100%", fig.cap = "**Figure S2**. Median posterior predictions of the effects of prey features on the predator's hunting success. The predators' hunting success (i.e., the probability of consuming the four prey) is on the y-axis, and the prey's features are on the x-axis. Panel A shows the effect of prey speed on the predator's hunting success. Panel B shows the effect of the prey's space coverage on hunting success. Panel C shows the effect of the prey's rank. The predictions are from Model III."}
 
 knitr::include_graphics(
   here::here(
     "outputs", "outputs_figures",
     "figureS2.png"
+  )
+)
+```
+
+
+\newpage
+
+```{r figS3, out.width = "100%", fig.cap = "**Figure S3**. Median posterior predictions of the development of predator expertise, holding the mean rank of the prey group at different fixed values (mean ± 2 SD). The predators' hunting success (i.e., the probability of consuming the four prey) is on the y-axis, and the cumulated experience is on the x-axis. Lower rank values indicate higher skill (rank 1 being the best rank). The predictions are from Model III."}
+
+knitr::include_graphics(
+  here::here(
+    "outputs", "outputs_figures",
+    "figureS3.png"
   )
 )
 ```
