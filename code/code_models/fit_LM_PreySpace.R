@@ -146,7 +146,7 @@ fit <- brm(
 )
 
 path <- file.path(getwd(), "outputs", "outputs_models")
-saveRDS(fit, file = file.path(path, "LM-PreySpace2026.rds"))
+saveRDS(fit, file = file.path(path, "LM-PreySpace.rds"))
 
 # ==========================================================================
 # ==========================================================================

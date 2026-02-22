@@ -93,7 +93,7 @@ priors <- c(
     coef = "Zgame_duration"
   ),
   set_prior(
-    "normal(-0.5, 1)",
+    "normal(-0.3, 1)",
     class = "b",
     coef = "Zprey_avg_rank"
   ),
