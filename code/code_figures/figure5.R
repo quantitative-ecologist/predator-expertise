@@ -108,17 +108,25 @@ epred_space <- posterior_epred(mod_space, newdata = new_data, re_formula = NA)
 # Convert to long format
 draws_long_speed <- as.data.table(t(epred_speed))
 draws_long_speed[, prey_avg_rank := new_data$prey_avg_rank]
-draws_long_speed <- melt(draws_long_speed, id.vars = "prey_avg_rank", variable.name = "draw")
+draws_long_speed <- melt(
+  draws_long_speed, id.vars = "prey_avg_rank", variable.name = "draw"
+)
 
 draws_long_space <- as.data.table(t(epred_space))
 draws_long_space[, prey_avg_rank := new_data$prey_avg_rank]
-draws_long_space <- melt(draws_long_space, id.vars = "prey_avg_rank", variable.name = "draw")
+draws_long_space <- melt(
+  draws_long_space, id.vars = "prey_avg_rank", variable.name = "draw"
+)
 
 # Compute the median and randomly sample 50 draws
-median_preds_speed <- draws_long_speed[, .(value = median(value)), by = prey_avg_rank]
+median_preds_speed <- draws_long_speed[
+  , .(value = median(value)), by = prey_avg_rank
+]
 sampled_draws_speed <- draws_long_speed[draw %in% sample(unique(draw), 50)]
 
-median_preds_space <- draws_long_space[, .(value = median(value)), by = prey_avg_rank]
+median_preds_space <- draws_long_space[
+  , .(value = median(value)), by = prey_avg_rank
+]
 sampled_draws_space <- draws_long_space[draw %in% sample(unique(draw), 50)]
 
 
