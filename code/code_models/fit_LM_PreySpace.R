@@ -52,7 +52,7 @@ standardize <- function(x) {
 }
 
 data[, c("Zgame_duration", "Zprey_avg_rank") := lapply(.SD, standardize),
-  .SDcols = c(2, 4)
+  .SDcols = c("game_duration", "prey_avg_rank")
 ]
 
 # ==========================================================================

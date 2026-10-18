@@ -72,7 +72,7 @@ drawsl <- melt(
   variable.name = "group",
   value.name = "value"
 )
-drawsl <- drawsl[, c(4,5)] # delete the chain info
+drawsl <- drawsl[, .(group, value)] # delete the chain info
 
 # Relabel
 drawsl[
