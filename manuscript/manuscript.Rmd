@@ -38,7 +38,10 @@ dat <- fread(
   )
 )
 
-dat[, c(2:6) := lapply(.SD, function(x) as.factor(x)), .SDcols = c(2:6)]
+id_cols <- c(
+  "match_id", "realm_id", "environment_id", "avatar_id", "predator_id"
+)
+dat[, (id_cols) := lapply(.SD, as.factor), .SDcols = id_cols]
 
 # To have a date column
 dat[, date := as.POSIXct(sub(" .*", "", timestamp))]
