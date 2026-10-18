@@ -25,12 +25,13 @@ library(data.table)
 # Load the data ------------------------------------------------------------
 
 data <- fread(
-  "./data/FraserFrancoetal2023-data.csv",
+  "./data/FraserFrancoetal2025-data.csv",
   select = c(
     "predator_id",
     "game_duration",
     "prey_avg_speed",
-    "prey_avg_rank"
+    "prey_avg_rank",
+    "prey_avg_space_rate"
   )
 )
 
@@ -39,6 +40,9 @@ data[, predator_id := as.factor(predator_id)]
 
 # Remove any NAs
 data <- data[complete.cases(data)]
+
+# Space rate within 0.2
+data <- data[prey_avg_space_rate <= 0.2]
 
 
 
@@ -49,7 +53,7 @@ standardize <- function(x) {
 }
 
 data[, c("Zgame_duration", "Zprey_avg_rank") := lapply(.SD, standardize),
-  .SDcols = c(2, 4)
+  .SDcols = c("game_duration", "prey_avg_rank")
 ]
 
 # ==========================================================================
