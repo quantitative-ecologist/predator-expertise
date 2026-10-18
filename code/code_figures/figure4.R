@@ -1,14 +1,7 @@
 # ==========================================================================
-
 #                                 Figure 4
-#                 Plot differences in parameters among models
-
+#     Model III average-individual trend by prey rank level
 # ==========================================================================
-
-# Figure of the posterior parameters for:
-#- Baseline
-#- Rate
-#- Asymptote
 
 
 
@@ -16,144 +9,81 @@
 # 1. Prepare script
 # ==========================================================================
 
-
-# Load libraries and model -------------------------------------------------
+options(mc.cores = parallel::detectCores())
 
 library(brms)
 library(data.table)
 library(ggplot2)
-library(ggridges)
 
-path <- file.path(getwd(), "outputs", "outputs_models")
+# Load model
+path_models <- file.path(getwd(), "outputs", "outputs_models")
+mod3 <- readRDS(file.path(path_models, "asym-III.rds"))
 
-fit1 <- readRDS(file.path(path, "asym-I.rds"))
-fit2 <- readRDS(file.path(path, "asym-II.rds"))
-fit3 <- readRDS(file.path(path, "asym-III.rds"))
-
-# ==========================================================================
-# ==========================================================================
-
-
-
-
-
-# ==========================================================================
-# 2. Extract posterior draws into a tidy table
-# ==========================================================================
-
-# Function to extract posterior draws
-extract_posterior_draws <- function(model, variables) {
-  post <- data.table(
-    as_draws_df(
-      model,
-      variable = variables
-    )
+# Load data
+data <- fread(
+  "./data/FraserFrancoetal2025-data.csv",
+  select = c(
+    "predator_id",
+    "game_duration",
+    "pred_speed",
+    "prey_avg_speed",
+    "prey_avg_amount_tiles_visited",
+    "prey_avg_space_rate",
+    "prey_avg_rank",
+    "cumul_xp_pred",
+    "total_xp_pred",
+    "hunting_success"
   )
-  post
-}
-
-# Variables
-variables <- c(
-  "sd_predator_id__a_Intercept",
-  #"sd_predator_id__b_Intercept",
-  "sd_predator_id__c_Intercept"
 )
 
-models <- list(fit1, fit2, fit3)
+data[, predator_id := as.factor(predator_id)]
+data <- data[complete.cases(data)]
+data <- data[prey_avg_space_rate <= 0.2]
 
-posterior_results <- list()
-
-for (i in seq_along(models)) {
-  posterior_results[[paste0("post", i)]] <- extract_posterior_draws(
-    models[[i]],
-    variables
-  )
+standardize <- function(x) {
+  (x - mean(x, na.rm = TRUE)) / sd(x, na.rm = TRUE)
 }
 
-# Clear memory
-rm(fit1)
-rm(fit2)
-rm(fit3)
-
-# Combine posterior draws
-figdat <- rbind(
-  posterior_results$post1,
-  posterior_results$post2,
-  posterior_results$post3
-)
-
-# Add model name
-figdat[, model := c(rep("fit1", 12000), rep("fit2", 16000), rep("fit3", 16000))]
-
-# ==========================================================================
-# ==========================================================================
-
-
-
-
-
-# ==========================================================================
-# 3. Summarize results from the posterior
-# ==========================================================================
-
-# Get intervals function
-get_hpd_interval <- function(x, prob = 0.95) {
-  interval <- coda::HPDinterval(as.mcmc(x), prob)
-  list(lower = interval[1], upper = interval[2])
-}
-
-# Declare the results function
-compute_results <- function(dt, col_name) {
-  x <- dt[[col_name]]
-  data.table(
-    column = col_name,
-    median = median(x),
-    lower_50 = get_hpd_interval(x, 0.50)$lower,
-    upper_50 = get_hpd_interval(x, 0.50)$upper,
-    lower_80 = get_hpd_interval(x, 0.80)$lower,
-    upper_80 = get_hpd_interval(x, 0.80)$upper,
-    lower_95 = get_hpd_interval(x, 0.95)$lower,
-    upper_95 = get_hpd_interval(x, 0.95)$upper
-  )
-}
-
-# ==========================================================================
-# ==========================================================================
-
-
-
-
-
-# ==========================================================================
-# 4. Prepare table for ploting
-# ==========================================================================
-
-# Convert to long format
-figdat_long <- melt(
-  figdat,
-  id.vars = "model",
-  measure.vars = patterns("^sd_predator_id__"),
-  variable.name = "parameter",
-  value.name = "value"
-)
-
-panel_names <- c(
-  a = "a: Asymptote (maximum hunting success)",
-  #b = "b: Baseline (initial hunting success)",
-  c = "c: Rate (expertise acquisition)"
-)
-
-figdat_long[
-  , parameter := factor(
-    parameter,
-    levels = c("sd_predator_id__a_Intercept",
-               #"sd_predator_id__b_Intercept",
-               "sd_predator_id__c_Intercept"),
-    labels = c("Asymptote (a):\nmaximum hunting success",
-               #"Baseline (b):\ninitial hunting success",
-               "Rate (c):\nexpertise acquisition")
+data[
+  ,
+  c("Zprey_speed", "Zgame_duration", "Zprey_avg_rank", "Zprey_space") := lapply(
+    .SD, standardize
+  ),
+  .SDcols = c(
+    "prey_avg_speed",
+    "game_duration",
+    "prey_avg_rank",
+    "prey_avg_space_rate"
   )
 ]
+
+# ==========================================================================
+# ==========================================================================
+
+
+
+
+
+# ==========================================================================
+# 2. Build conditions for three prey rank levels
+# ==========================================================================
+
+rank_levels <- c(-2, 0, 2)
+
+rank_labels <- c(
+  "More skilled: -2 SD rank",
+  "Average skill: mean rank",
+  "Less skilled: +2 SD rank"
+)
+
+conds <- data.frame(
+  Zprey_avg_rank = rank_levels,
+  Zgame_duration = 0,
+  Zprey_speed = 0,
+  Zprey_space = 0
+)
+rownames(conds) <- rank_labels
+
 # ==========================================================================
 # ==========================================================================
 
@@ -162,61 +92,108 @@ figdat_long[
 
 
 # ==========================================================================
-# 5. Plot the posterior distribution of parameters
+# 3. Compute conditional effects
 # ==========================================================================
 
-# Prepare figure -----------------------------------------------------------
+ce <- conditional_effects(
+  mod3,
+  method = "fitted",
+  effects = "cumul_xp_pred",
+  conditions = conds,
+  robust = TRUE,
+  re_formula = NA
+)[[1L]]
 
-# Custom theme
+ce <- as.data.table(ce)
+
+# Rename the condition column for legibility
+ce[, rank_group := factor(cond__, levels = rank_labels)]
+
+# ==========================================================================
+# ==========================================================================
+
+
+
+
+
+# ==========================================================================
+# 4. Custom theme
+# ==========================================================================
+
 custom_theme <- theme(
-  axis.text = element_text(size = 14, color = "black"),
-  axis.title = element_text(size = 16),
-  strip.text.x = element_text(size = 15),
+  plot.title = element_text(size = 14),
+  axis.text = element_text(face = "plain", size = 14, color = "black"),
   axis.ticks.length = unit(.15, "cm"),
   axis.ticks = element_line(linewidth = 0.90, color = "black"),
+  axis.title = element_text(size = 16, face = "plain", color = "black"),
   axis.line = element_line(linewidth = 0.95, color = "black"),
-  panel.grid = element_blank(),
-  panel.background = element_blank(),
+  legend.position = "right",
   legend.title = element_text(size = 13),
-  legend.text = element_text(size = 13),
-  legend.position = "top"
+  legend.text = element_text(size = 12),
+  panel.grid = element_blank(),
+  panel.background = element_blank()
 )
 
-p <- ggplot(
-  data = figdat_long,
-  aes(x = value, y = parameter, fill = model)
+# ==========================================================================
+# ==========================================================================
+
+
+
+
+
+# ==========================================================================
+# 5. Plot
+# ==========================================================================
+
+# Colour palette
+rank_colours <- c(
+  "More skilled: -2 SD rank" = "#f98e09",
+  "Average skill: mean rank"  = "#bc3754",
+  "Less skilled: +2 SD rank" = "#57106e"
 )
 
-fig <- p + geom_density_ridges(
-  scale = 0.75,
-  alpha = 0.5,
-  quantile_lines = TRUE,
-  quantiles = 2,
-  rel_min_height = 0.0009
+figure <- ggplot(
+  data = ce,
+  aes(
+    x = cumul_xp_pred,
+    y = estimate__ / 4,
+    ymin = lower__ / 4,
+    ymax = upper__ / 4,
+    color = rank_group,
+    fill = rank_group
+  )
 ) +
-  scale_x_continuous(breaks = seq(0, 2, 0.5), limits = c(0, 2)) +
-  scale_fill_manual(
-    values = c("#e55c30", "#781c6d", "#140b34"),
-    labels = c("Model I", "Model II", "Model III")
-  ) +
-  labs(fill = " ") +
-  ylab("") +
-  xlab("\nStandard deviation") +
-  theme_classic() +
+  geom_ribbon(alpha = 0.15, color = NA) +
+  geom_line(linewidth = 1) +
+  scale_color_manual(values = rank_colours, name = "Prey skill") +
+  scale_fill_manual(values  = rank_colours, name = "Prey skill") +
+  scale_y_continuous(breaks = seq(0, 1, 0.25), limits = c(0, 1)) +
+  scale_x_continuous(breaks = seq(0, 500, 100), limits = c(0, 500)) +
+  ylab("Hunting success\n") +
+  xlab("\nCumulative experience") +
   custom_theme
 
+# ==========================================================================
+# ==========================================================================
 
 
-# Save figure --------------------------------------------------------------
 
-path_to_save <- file.path(getwd(), "outputs", "outputs_figures")
+
+
+# ==========================================================================
+# 6. Export
+# ==========================================================================
+
+path_fig <- file.path(getwd(), "outputs", "outputs_figures")
 
 ggsave(
-  plot = fig,
-  filename = file.path(path_to_save, "figure4.png"),
-  dpi = 500,
-  height = 6,
-  width = 8
+  filename = file.path(path_fig, "figure4.png"),
+  plot = figure,
+  width = 2500 / 300,
+  height = 1800 / 300,
+  dpi = 300,
+  device = grDevices::png,
+  type = "cairo-png"
 )
 
 # ==========================================================================

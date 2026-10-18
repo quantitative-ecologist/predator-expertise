@@ -162,16 +162,3 @@ knitr::include_graphics(
   )
 )
 ```
-
-
-\newpage
-
-```{r figS3, out.width = "100%", fig.cap = "**Figure S3**. Median posterior predictions of the development of predator expertise, holding the mean rank of the prey group at different fixed values (mean ± 2 SD). The predators' hunting success (i.e., the probability of consuming the four prey) is on the y-axis, and the cumulated experience is on the x-axis. Lower rank values indicate higher skill (rank 1 being the best rank). The predictions are from Model III."}
-
-knitr::include_graphics(
-  here::here(
-    "outputs", "outputs_figures",
-    "figureS3.png"
-  )
-)
-```
