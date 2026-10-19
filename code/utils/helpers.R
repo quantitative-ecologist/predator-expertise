@@ -45,7 +45,7 @@ extract_model_params <- function(fit, prob = 0.89) {
 }
 
 
-# 2. Function to extract slopes on parameters 
+# 2. Function to extract slopes on parameters
 # (for models with covariates on asym parameters)
 extract_param_slopes <- function(fit, prob = 0.89) {
   alpha <- (1 - prob) / 2
@@ -127,4 +127,94 @@ extract_random_effects <- function(fit, prob = 0.89) {
     ),
     prob = prob
   )
+}
+
+
+# 4. Function to build a parameter comparison table across models
+extract_param_table <- function(fits, prob = 0.89, digits = 2) {
+  alpha <- (1 - prob) / 2
+  q_lo  <- alpha
+  q_hi  <- 1 - alpha
+
+  rows <- data.frame(
+    section = c(
+      rep("Asymptotic parameters", 5),
+      rep("Covariates on hunting success", 2),
+      rep("Prey behaviour on a", 2),
+      rep("Prey behaviour on c", 2),
+      rep("Predator random effects (SD)", 3),
+      rep("Predator random effects (correlation)", 3),
+      "Overdispersion"
+    ),
+    parameter = c(
+      "a (maximum success)", "a (maximum success)",
+      "b (initial success)", "b (initial success)",
+      "c (rate of gain)",
+      "game duration", "prey rank",
+      "prey speed", "prey space",
+      "prey speed", "prey space",
+      "SD(a)", "SD(b)", "SD(c)",
+      "cor(a, b)", "cor(a, c)", "cor(b, c)",
+      "phi"
+    ),
+    scale = c(
+      "logit", "probability",
+      "logit", "probability",
+      "log",
+      "logit", "logit",
+      "logit", "logit",
+      "log", "log",
+      "logit", "logit", "log",
+      "—", "—", "—",
+      "—"
+    ),
+    variable = c(
+      "b_a_Intercept", "b_a_Intercept",
+      "b_b_Intercept", "b_b_Intercept",
+      "b_c_Intercept",
+      "b_betaduration_Intercept", "b_betarank_Intercept",
+      "b_a_Zprey_speed", "b_a_Zprey_space",
+      "b_c_Zprey_speed", "b_c_Zprey_space",
+      "sd_predator_id__a_Intercept",
+      "sd_predator_id__b_Intercept",
+      "sd_predator_id__c_Intercept",
+      "cor_predator_id__a_Intercept__b_Intercept",
+      "cor_predator_id__a_Intercept__c_Intercept",
+      "cor_predator_id__b_Intercept__c_Intercept",
+      "phi"
+    ),
+    transform = c(
+      "identity", "plogis",
+      "identity", "plogis",
+      rep("identity", 14)
+    ),
+    stringsAsFactors = FALSE
+  )
+
+  fmt <- function(x) {
+    sprintf(
+      paste0("%.", digits, "f [%.", digits, "f, %.", digits, "f]"),
+      median(x),
+      unname(stats::quantile(x, probs = q_lo)),
+      unname(stats::quantile(x, probs = q_hi))
+    )
+  }
+
+  out <- rows[, c("section", "parameter", "scale")]
+
+  for (m in names(fits)) {
+    # Only extract the variables present in this model
+    vars <- intersect(unique(rows$variable), brms::variables(fits[[m]]))
+    dr <- posterior::as_draws_df(fits[[m]], variable = vars)
+
+    out[[m]] <- vapply(seq_len(nrow(rows)), function(i) {
+      v <- rows$variable[i]
+      if (!v %in% vars) return("—")
+      x <- dr[[v]]
+      if (rows$transform[i] == "plogis") x <- plogis(x)
+      fmt(x)
+    }, character(1))
+  }
+
+  out
 }
