@@ -4,7 +4,7 @@
 cd "$(dirname "$0")/../.."
 
 # List of models to process
-models=("LM_PreySpeed" "LM_PreySpace" , "asym_baseline", asym_I" "asym_II" "asym_III")
+models=("LM-PreySpeed" "LM-PreySpace" "asym-baseline" "asym-I" "asym-II" "asym-III")
 
 for mod in "${models[@]}"
 do
