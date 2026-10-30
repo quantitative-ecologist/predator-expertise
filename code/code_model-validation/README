@@ -1,30 +1,44 @@
 # Model validation and diagnostics
 
-This folder contains scripts for model validation and diagnostics on HPC systems. 
+This folder contains scripts for model validation and diagnostics.
+
+## Quick commands
+
+From the project root:
+
+- `make waic-table`: build the WAIC comparison table (after the WAIC files exist)
+- `make checks`: diagnostics for all models (skips models already done)
+- `make waic-local`: compute WAIC on your computer for all asym models (or e.g. `MODELS="asym-baseline"`)
+- `make checks-redo MODELS="LM-PreySpeed LM-PreySpace"`: redo the diagnostics of specific models
 
 ## Contents
 
-### WAIC model comparison
+### 1. WAIC model comparison
 
-**Individual model scripts:**
+**Individual model scripts (for HPC):**
 
 - `waic-asym-I.R` / `run_waic-asym-I.sh`
 - `waic-asym-II.R` / `run_waic-asym-II.sh`
 - `waic-asym-III.R` / `run_waic-asym-III.sh`
 
+**Global script (for a local run):**
+
+- `waic-compute.R`
 
 **Comparison table:**
 
 - `waic-table.R` - Generates comparison table from WAIC results
 
-### Model diagnostics
+### 2. Model diagnostics
 
 - `checks_models.R` / `run_checks_models.sh` - Model convergence diagnostics
 
 
-## Running WAIC validation on Fir
+## 1. Computing WAIC
 
-### Step 1: Submit individual model jobs
+### Running WAIC validation on Fir
+
+#### Submit individual model jobs
 
 The WAIC validation was performed on [Fir](https://docs.alliancecan.ca/wiki/Fir).
 
@@ -42,12 +56,24 @@ Each job:
 - Computes WAIC
 - Saves results to `root/waic_asym-<model>.rds`
 
-### Step 2: Generate comparison table
+### Running WAIC validation locally
 
-This step can be performed on your computer. Once all three jobs complete, run:
+WAIC can also be computed on a personal computer, provided it has enough memory.
+`waic-compute.R` uses `waic(pointwise = TRUE)`, which computes the log-likelihood
+one observation at a time instead of storing the full matrix. Hence, it should require far less RAM than the 64 GB allocated on Fir, but takes longer.
 
 ```bash
-Rscript code/code_model-validation/waic-table.R
+make waic-local # or: Rscript code/code_model-validation/waic-compute.R asym-baseline
+```
+
+Results are saved to `outputs/outputs_model-validation/waic_<model>.rds`.
+
+### Generate comparison table
+
+This step can be performed on your computer. Once you have the individual model waic outputs, run:
+
+```bash
+make waic-table # or: Rscript code/code_model-validation/waic-table.R
 ```
 
 This creates:
@@ -57,12 +83,12 @@ This creates:
 The table shows ELPD differences and standard errors for model comparison.
 
 
-## Model diagnostics
+## 2. Model diagnostics
 
 To run convergence diagnostics from the root folder:
 
 ```bash
-./code/code_model-validation/run_checks_models.sh
+make checks #or: ./code/code_model-validation/run_checks_models.sh
 ```
 
 This generates:
@@ -74,3 +100,11 @@ This generates:
   - `error_scatter_avg`
 
 Outputs saved to `outputs/outputs_model-validation/`
+
+If you wish to rerun diagostics, use this command on specific models:
+
+```bash
+make checks-redo MODELS="LM-PreySpeed LM-PreySpace"
+```
+
+This will erase the stored files and regenerate them.
