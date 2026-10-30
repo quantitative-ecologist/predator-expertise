@@ -10,7 +10,7 @@ library(brms)
 
 # Define path and file names
 output_path <- file.path(getwd(), "outputs", "outputs_model-validation")
-model_names <- c("asym-I", "asym-II", "asym-III")
+model_names <- c("asym-baseline", "asym-I", "asym-II", "asym-III")
 
 # Import WAIC model output files
 waic_results <- lapply(
