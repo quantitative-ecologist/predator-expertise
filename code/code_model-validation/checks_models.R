@@ -29,18 +29,14 @@ model_path <- file.path(getwd(), "outputs", "outputs_models")
 output_path <- file.path(getwd(), "outputs", "outputs_model-validation")
 if (!dir.exists(output_path)) dir.create(output_path, recursive = TRUE)
 
-# Define expected model files
-model_files <- list(
-  LM_PreySpeed = "LM-PreySpeed.rds",
-  LM_PreySpace = "LM-PreySpace.rds",
-  asym_baseline = "asym-baseline.rds",
-  asym_I = "asym-I.rds",
-  asym_II = "asym-II.rds",
-  asym_III = "asym-III.rds"
+# Expected models (names of the .rds files in outputs/outputs_models)
+valid_models <- c(
+  "LM-PreySpeed", "LM-PreySpace",
+  "asym-baseline", "asym-I", "asym-II", "asym-III"
 )
 
-if (!mod %in% names(model_files)) {
-  stop("Unknown model: ", mod)
+if (!mod %in% valid_models) {
+  stop("Unknown model: ", mod, ". Use one of: ", toString(valid_models))
 }
 
 # =======================================================================
@@ -54,7 +50,7 @@ if (!mod %in% names(model_files)) {
 # 2. Load models and generate diagnostics
 # =======================================================================
 
-file_name <- model_files[[mod]]
+file_name <- paste0(mod, ".rds")
 file_path <- file.path(model_path, file_name)
 png_path <- file.path(output_path, paste0("checks_", mod, ".png"))
 trace_path <- file.path(output_path, paste0("trace_", mod, ".pdf"))
